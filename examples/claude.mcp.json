@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "nodo": {
+      "command": "node",
+      "args": ["/absolute/path/to/nodo-mcp/dist/index.js"],
+      "env": {
+        "NODO_API_KEY": "nodo_<key-id>",
+        "NODO_API_SECRET": "<secret shown once when the login was created>"
+      }
+    }
+  }
+}

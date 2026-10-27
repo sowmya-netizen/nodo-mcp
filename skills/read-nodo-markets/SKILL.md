@@ -1,13 +1,13 @@
 ---
 name: read-nodo-markets
-description: Read NODO lending markets and their yield and borrow history with the read-only nodo MCP. Use when the user asks which venue lends against a token, liquidation LTV, borrow rate, supply APY, or rate history. Do not use it to open a position or submit a transaction.
+description: Read NODO lending desks, loan-to-value, and rate history. Use when someone asks which desk accepts an asset as collateral, the loan-to-value of a margin call, the cost of funds, or rate history. Do not use it to book a loan or move customer money.
 ---
 
-# Read NODO markets
+# Read a lending desk
 
-A lending market is where a yield product can be posted as collateral. The business question is whether the borrow cost and the liquidation LTV still leave the opportunity intact. This skill only reads. It does not borrow or liquidate.
+A lending desk is where a savings asset can be pledged and dollars borrowed against it. Treasury needs the cost of funds and the loan-to-value at which the collateral is sold. This only reads. It does not borrow, and it does not trigger a margin call.
 
-Use the `nodo` MCP server. If it is not connected, stop and say so. Do not invent markets.
+Use the `nodo` server. If it is not connected, stop and say so. Do not invent pools.
 
 ## Find a market
 
@@ -24,4 +24,4 @@ Use the `nodo` MCP server. If it is not connected, stop and say so. Do not inven
 
 ## Stop
 
-Do not turn a market row into an order. Do not estimate slippage or open a position. If the user wants a trade, say this server cannot do that.
+Do not turn a desk into a booked loan. Do not price a payment or move customer money. If someone wants to borrow, say this program cannot do that.

@@ -1,54 +1,69 @@
 # nodo-mcp
 
-An assistant can look up NODO's live catalog. It cannot place a trade.
+A read-only feed of savings assets, what they pay, and what it costs to borrow against them.
 
-NODO already serves that catalog over its product API: yield products, leveraged opportunities, and the lending markets behind them. This server is the same information, shaped so a chat assistant can read it. A person asks a question in plain language. The assistant calls the API, then answers with ids, yields, and market rates from the current book.
+## The situation
 
-## Why it exists
+A neobank takes deposits and pays customers a rate. The cash behind those balances has to earn more than that rate, or the product loses money.
 
-A fund using NODO has to answer three questions before anyone commits money:
+One way to earn the spread is to place cash into short-dated assets, such as government debt or private credit, and in some cases to borrow against those assets and buy more of them. The spread is the asset yield minus the interest on the borrowing. It only holds if three things are true at once:
 
-1. Which yield products are on the book, and what are they earning?
-2. Where can that product be used as collateral, and what does the leverage look like after borrow cost?
-3. What has the lending market actually paid, not just the latest quote?
+- The asset pays more than the cost of funds.
+- The loan stays under the loan-to-value where the collateral is sold. That is the margin call.
+- The rates are from today. Yesterday's funding cost is not a price you can lock.
 
-Those answers already live in the API. They were hard to reach from the tools people now use to think: Cursor, Claude, and other assistants. Rebuilding the catalog inside each assistant would drift from production. Giving an assistant the write API would let it estimate, open, or confirm a position.
+Those figures sit at several lending desks, each with its own rules. Checking them by hand, or from a spreadsheet saved yesterday, is how a savings rate gets offered on stale numbers.
 
-This server takes the first path. It reads production. It leaves the decision, and the transaction, on the existing API.
+## What NODO is
 
-That is the business case. The catalog stays one source. An assistant can brief an analyst. It cannot move funds, borrow, or submit a route.
+NODO is the live book a treasury or product team reads before it prices that savings rate. Customer money stays at the neobank. NODO does not hold deposits. It collects three lists from the lending desks:
 
-## What you can ask
+- **Products.** The assets cash can go into: name, ticker, issuer, what they are paying, and how large they are.
+- **Opportunities.** One asset used as collateral at one desk. This is the spread: yield left after funding cost, and the largest loan that still sits short of a margin call.
+- **Markets.** The desks themselves: what they accept as collateral, what they lend (usually dollars), the loan-to-value at which they sell the collateral, and the history of what they have charged.
 
-| Question | Tool to start with | Then |
+NODO publishes the book at `https://app.nodo.xyz/api/v2`. That same API is where a loan would later be prepared, under the neobank's own approval. This project does not do that.
+
+## What this project is
+
+`nodo-mcp` lets an internal tool read the book: the asset yield, the cost of funds, the loan-to-value, and the rate history. It is a data feed, not a payment rail.
+
+It cannot move customer money, book a loan, or return the instructions for buying or redeeming an asset. A person still approves that on NODO's API.
+
+The feed needs a NODO login, and that login can be limited to reading. This program cannot widen it.
+
+## Questions it can answer
+
+| Question a treasury or product team asks | Start here | Then |
 | --- | --- | --- |
-| What yield products are listed? | `list_assets` | `get_asset` with `assetId` from that list |
-| Where can we lever a product, and what is the net APY? | `list_opportunities` | `get_opportunity` with `opportunityId` |
-| Which markets lend against a token, and at what LTV? | `list_markets` | Filter by venue, collateral, or debt symbol |
-| What did this market earn and cost to borrow? | `get_market_apy_history` | Use `protocolId` and `marketId` from the market list |
+| Which assets can back a savings rate, and what do they pay? | `list_assets` | `get_asset` with the `assetId` from that list |
+| If we borrow against one asset, what spread is left after funding cost? | `list_opportunities` | `get_opportunity` with the `opportunityId` |
+| Which desks accept this collateral, and at what loan-to-value is there a margin call? | `list_markets` | Narrow by desk, collateral, or the currency borrowed |
+| What has this desk paid, and what has it charged to borrow? | `get_market_apy_history` | Use `protocolId` and `marketId` from the market list |
 
-Lists come back as one row per record, plus `asOfTime` when the API sends it. When `nextOffset` is a number, ask again with that offset. When it is null, that was the last page. Lists ask for 10 rows if you do not set `limit`. The API allows 1 to 100.
+A list returns about ten rows unless you ask for more (up to 100). `nextOffset` tells you where the next page starts. A null `nextOffset` means there is no further page. `asOfTime` is when the figures were read, when the API includes it.
 
-`list_markets` reads the full market list once. `network`, `protocolId`, `collateral`, and `debt` narrow those rows afterward. They are not sent to the API as query parameters.
+The market list is returned in full, then narrowed. `network`, `protocolId`, `collateral`, and `debt` are filters on that result. They are not extra questions to the API. `page.total` is the size of the full list. `page.matched` is how many rows remain.
 
-## What it will not do
+## Run it
 
-It will not estimate, open, authorize, or confirm a position. It will not read positions, liquidation, or administration. It does not return purchase, redemption, or acquisition routes, because those are how a trade is built.
-
-A workload key still needs the API's `common.read` permission. This server does not grant it.
-
-## Connect it in Cursor
-
-You need Node.js 22 or newer, and a NODO workload key. NODO shows the secret once, when the key is created. Put it in the MCP client environment. Do not paste it into chat, and do not commit it.
+You need Node.js 22 or newer, and a NODO read login. NODO shows the secret only once, when the login is created. Keep it on the machine that runs this program. Do not put it in git.
 
 ```bash
 npm install
 npm test
+node dist/index.js
 ```
 
-`npm test` compiles the server and runs the checks. Start it with `node dist/index.js`. It speaks MCP on stdin and stdout.
+`npm test` compiles the program and checks it. The program then waits for requests on standard input.
 
-Add this to `mcp.json`. Replace the path. Leave the real secret out of git.
+The list comes from `https://app.nodo.xyz/api/v2`. Set `NODO_API_BASE_URL` only if you have another host that serves the same `/api/v2` list.
+
+This package is not published to npm, so `npx nodo-mcp` will not work.
+
+### Cursor or Claude Desktop
+
+Both read the same JSON shape. Cursor uses `mcp.json`. Claude Desktop uses `~/Library/Application Support/Claude/claude_desktop_config.json` on a Mac. Replace the path. A ready-to-copy file is [examples/claude.mcp.json](examples/claude.mcp.json).
 
 ```json
 {
@@ -58,30 +73,42 @@ Add this to `mcp.json`. Replace the path. Leave the real secret out of git.
       "args": ["/absolute/path/to/nodo-mcp/dist/index.js"],
       "env": {
         "NODO_API_KEY": "nodo_<key-id>",
-        "NODO_API_SECRET": "<secret shown once when the key was created>"
+        "NODO_API_SECRET": "<secret shown once when the login was created>"
       }
     }
   }
 }
 ```
 
-The default API is `https://app.nodo.xyz/api/v2`. Set `NODO_API_BASE_URL` only for another host that still serves `/api/v2`.
+Claude Code in this repository reads [CLAUDE.md](CLAUDE.md). You can also point it at the same JSON with `claude mcp add`.
 
-`npx nodo-mcp` is not available. The package is not on npm.
+### Codex
 
-## For an assistant
+Add the block in [examples/codex.config.toml](examples/codex.config.toml) to `~/.codex/config.toml`. Codex in this repository reads [AGENTS.md](AGENTS.md).
 
-Two skills in this repo describe the steps:
+```toml
+[mcp_servers.nodo]
+command = "node"
+args = ["/absolute/path/to/nodo-mcp/dist/index.js"]
 
-- [.cursor/skills/find-nodo-yield/SKILL.md](.cursor/skills/find-nodo-yield/SKILL.md) for products and leveraged opportunities
-- [.cursor/skills/read-nodo-markets/SKILL.md](.cursor/skills/read-nodo-markets/SKILL.md) for lending markets and rate history
+[mcp_servers.nodo.env]
+NODO_API_KEY = "nodo_<key-id>"
+NODO_API_SECRET = "<secret shown once when the login was created>"
+```
 
-## If a call fails
+The same two guides are picked up from `skills/` by Cursor (`.cursor/skills`), Claude (`.claude/skills`), and Codex (`.agents/skills`):
 
-The API reports a failed read as HTTP 200 with `{ "error": { "code", "message" } }`. This server turns that into a tool error, for example `NODO API auth_invalid: API key is invalid or revoked`. Other HTTP errors are tool errors too. If a response echoes the secret, the text shows `[redacted]`.
+- [How to look up a savings asset and the spread after funding cost](skills/find-nodo-yield/SKILL.md)
+- [How to look up a lending desk, loan-to-value, and rate history](skills/read-nodo-markets/SKILL.md)
 
-The server signs each read. The secret never leaves the machine. A missing or malformed key stops the process before any request. Each signature lasts 30 seconds.
+[llms.txt](llms.txt) is a short map of this repository for a reader who has not seen it before.
 
-## Publish status
+## When a request fails
 
-`server.json` names `io.github.sowmya-netizen/nodo` and points at this repository. The official MCP registry does not list it yet. That step needs a published package, then a GitHub login as `sowmya-netizen`.
+A refused read often still comes back as HTTP 200, with a body of `{ "error": { "code", "message" } }`. This program reports that as a failure, for example `NODO API auth_invalid: API key is invalid or revoked`. Any other HTTP error is a failure too.
+
+Each read is signed on this machine. The secret is not sent. If a response happens to contain the secret, it is replaced with `[redacted]`. A bad or missing login stops the program before it makes a request. A signature expires after 30 seconds.
+
+## Listing
+
+`server.json` names this program `io.github.sowmya-netizen/nodo`. It is not on the public MCP registry yet. That requires publishing a package and signing in to GitHub as `sowmya-netizen`.
