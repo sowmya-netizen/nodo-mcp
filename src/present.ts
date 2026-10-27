@@ -8,8 +8,19 @@ export type ReadKind =
 
 type Json = Record<string, unknown>;
 
+export type MarketFilter = Readonly<{
+  network?: string;
+  protocolId?: string;
+  collateral?: string;
+  debt?: string;
+}>;
+
 /** Turn an API body into the text a tool returns. Lists are one row per record. */
-export function presentRead(kind: ReadKind, body: unknown): string {
+export function presentRead(
+  kind: ReadKind,
+  body: unknown,
+  options: Readonly<{ marketFilter?: MarketFilter }> = {}
+): string {
   const data = envelope(body);
   switch (kind) {
     case "list_assets":
@@ -24,12 +35,13 @@ export function presentRead(kind: ReadKind, body: unknown): string {
         "opportunityId"
       );
     case "list_markets":
-      return presentList(kind, data, "markets", projectMarket, null, null);
+      return presentMarkets(data, options.marketFilter);
     case "get_market_apy_history":
       return presentHistory(data, body);
     case "get_asset":
+      return data ? pretty(projectAssetDetail(data)) : unrecognized(kind, null);
     case "get_opportunity":
-      return pretty(data ?? body);
+      return data ? pretty(projectOpportunityDetail(data)) : unrecognized(kind, null);
   }
 }
 
@@ -55,10 +67,39 @@ function presentList(
       : "Copy protocolId and marketId into get_market_apy_history.";
   return pretty({
     read: kind,
+    asOfTime: data.asOfTime ?? null,
     page,
     next,
     detail,
     [field]: items,
+  });
+}
+
+function presentMarkets(data: Json | null, filter: MarketFilter | undefined): string {
+  const rows = data ? asArray(data.markets) : null;
+  if (!data || !rows) return unrecognized("list_markets", data);
+  const active = activeFilter(filter);
+  const selected = active ? rows.filter((row) => marketMatches(row, active)) : rows;
+  const items = selected.map((row) => projectMarket(row));
+  const page = active
+    ? {
+        returned: items.length,
+        offset: 0,
+        limit: null,
+        matched: items.length,
+        total: rows.length,
+        nextOffset: null,
+      }
+    : pageFrom(data, items.length);
+  return pretty({
+    read: "list_markets",
+    asOfTime: data.asOfTime ?? null,
+    page,
+    next: null,
+    detail: active
+      ? "Filters run on the full market list after one read. They are not API query parameters. Copy protocolId and marketId into get_market_apy_history."
+      : "Copy protocolId and marketId into get_market_apy_history.",
+    markets: items,
   });
 }
 
@@ -133,9 +174,52 @@ function projectOpportunity(row: Json): Json {
     safeMaximumLtvBps: row.safeMaximumLtvBps ?? null,
     maximumOpenRounds: row.maximumOpenRounds ?? null,
     rateKind: rate?.kind ?? null,
+    baseYieldApy: compactYield(row.baseYieldApy),
     projectionStatus: projection?.status ?? null,
     netApy: netApy?.current ?? null,
     leverage: leverage?.selected ?? null,
+  };
+}
+
+function projectAssetDetail(row: Json): Json {
+  const summary = projectAsset(row);
+  const terms = record(row.terms);
+  const economics = record(row.economics);
+  return {
+    read: "get_asset",
+    ...summary,
+    terms: terms
+      ? {
+          access: terms.access ?? null,
+          isInvestable: terms.isInvestable ?? null,
+          openEnded: terms.openEnded ?? null,
+          maturesAt: terms.maturesAt ?? null,
+          lockupPeriodMonths: terms.lockupPeriodMonths ?? null,
+          holderRightToRedeem: terms.holderRightToRedeem ?? null,
+        }
+      : null,
+    economics: economics
+      ? {
+          navUsd: economics.navUsd ?? null,
+          priceUsd: economics.priceUsd ?? null,
+          apy: economics.apy ?? null,
+          apy30d: economics.apy30d ?? null,
+          updatedAt: economics.updatedAt ?? null,
+          freshness: economics.freshness ?? null,
+        }
+      : null,
+    omitted:
+      "Purchase, redemption, and acquisition routes are left out. This server cannot submit them.",
+  };
+}
+
+function projectOpportunityDetail(row: Json): Json {
+  return {
+    read: "get_opportunity",
+    ...projectOpportunity(row),
+    assembledAt: row.assembledAt ?? null,
+    omitted:
+      "Acquisition routes are left out. This server cannot open, close, or estimate a position.",
   };
 }
 
@@ -158,6 +242,45 @@ function projectMarket(row: Json): Json {
     rateKind: rate?.kind ?? null,
     annualizedRate: rate?.annualizedRate ?? null,
     executionAvailable: row.executionAvailable ?? null,
+  };
+}
+
+function marketMatches(row: Json, filter: MarketFilter): boolean {
+  const market = projectMarket(row);
+  if (filter.network && !sameText(market.network, filter.network)) return false;
+  if (filter.protocolId && !sameText(market.protocolId, filter.protocolId)) return false;
+  if (filter.collateral && !sameText(market.collateral, filter.collateral)) return false;
+  if (filter.debt && !sameText(market.debt, filter.debt)) return false;
+  return true;
+}
+
+function activeFilter(filter: MarketFilter | undefined): MarketFilter | null {
+  if (!filter) return null;
+  const network = blankToUndefined(filter.network);
+  const protocolId = blankToUndefined(filter.protocolId);
+  const collateral = blankToUndefined(filter.collateral);
+  const debt = blankToUndefined(filter.debt);
+  if (!network && !protocolId && !collateral && !debt) return null;
+  return { network, protocolId, collateral, debt };
+}
+
+function blankToUndefined(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function sameText(value: unknown, expected: string): boolean {
+  return typeof value === "string" && value.toLowerCase() === expected.toLowerCase();
+}
+
+function compactYield(value: unknown): unknown {
+  if (typeof value === "string" || typeof value === "number") return value;
+  const row = record(value);
+  if (!row) return null;
+  return {
+    status: row.status ?? null,
+    current: row.current ?? row.value ?? null,
+    basis: row.basis ?? null,
   };
 }
 

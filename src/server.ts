@@ -2,12 +2,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NodoConfig } from "./credentials.js";
 import { redactSecret } from "./credentials.js";
 import { nodoGet, type QueryEntry } from "./http.js";
-import { presentRead, type ReadKind } from "./present.js";
+import { presentRead, type MarketFilter, type ReadKind } from "./present.js";
 import {
   getAssetInput,
   getMarketApyHistoryInput,
   getOpportunityInput,
   listAssetsInput,
+  listMarketsInput,
   listOpportunitiesInput,
 } from "./schemas.js";
 
@@ -25,7 +26,7 @@ const ONLY_READS =
 
 export function createNodoServer(config: NodoConfig): McpServer {
   const server = new McpServer(
-    { name: "nodo", version: "0.2.0" },
+    { name: "nodo", version: "0.3.0" },
     {
       instructions:
         "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions. List tools return one compact row per record and a next offset when another page exists. Copy assetId into get_asset and opportunityId into get_opportunity. Copy protocolId and marketId into get_market_apy_history. A failed read is a tool error, including when the API returns HTTP 200 with an error code.",
@@ -57,7 +58,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "get_asset",
     {
       title: "Get asset",
-      description: `Get one NODO yield product by id. GET /assets/{assetId}. ${ONLY_READS}`,
+      description: `Read one yield product: identity, terms, APY, and TVL. Does not include purchase or redemption routes. ${ONLY_READS}`,
       inputSchema: getAssetInput,
       annotations: READ_ONLY,
     },
@@ -98,7 +99,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "get_opportunity",
     {
       title: "Get opportunity",
-      description: `Get one leveraged yield opportunity by id. GET /opportunities/{opportunityId}. ${ONLY_READS}`,
+      description: `Read one leveraged opportunity: venue, collateral, debt, base yield, net APY, and leverage. Does not include acquisition routes. ${ONLY_READS}`,
       inputSchema: getOpportunityInput,
       annotations: READ_ONLY,
     },
@@ -110,11 +111,19 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_markets",
     {
       title: "List markets",
-      description: `List lending markets that accept collateral. Copy protocolId and marketId into get_market_apy_history. ${ONLY_READS}`,
-      inputSchema: {},
+      description: `List lending markets that accept collateral. Optional network, protocolId, collateral, and debt filters run after the full list is read. Copy protocolId and marketId into get_market_apy_history. ${ONLY_READS}`,
+      inputSchema: listMarketsInput,
       annotations: READ_ONLY,
     },
-    async () => read(config, ["markets"], [], "list_markets")
+    async (args) =>
+      read(config, ["markets"], [], "list_markets", {
+        marketFilter: {
+          network: args.network,
+          protocolId: args.protocolId,
+          collateral: args.collateral,
+          debt: args.debt,
+        },
+      })
   );
 
   server.registerTool(
@@ -145,11 +154,12 @@ async function read(
   config: NodoConfig,
   segments: readonly string[],
   query: readonly QueryEntry[],
-  kind: ReadKind
+  kind: ReadKind,
+  options: Readonly<{ marketFilter?: MarketFilter }> = {}
 ) {
   try {
     const body = await nodoGet(config, segments, query);
-    const text = typeof body === "string" ? body : presentRead(kind, body);
+    const text = typeof body === "string" ? body : presentRead(kind, body, options);
     return {
       content: [{ type: "text" as const, text: redactSecret(text, config.apiSecret) }],
     };

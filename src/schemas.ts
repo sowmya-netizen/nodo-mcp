@@ -201,6 +201,39 @@ export const listOpportunitiesInput = {
 
 export const getOpportunityInput = { opportunityId };
 
+export const listMarketsInput = {
+  network: z
+    .enum(["ethereum", "solana"])
+    .describe(
+      "Keep markets on this network. Applied after the API returns the full list. Omit for every network."
+    )
+    .optional(),
+  protocolId: z
+    .string()
+    .min(1)
+    .max(128)
+    .describe(
+      "Keep one lending venue, for example morpho-blue or aave-v3. Compared case-insensitively after the full list is read. Omit for every venue."
+    )
+    .optional(),
+  collateral: z
+    .string()
+    .min(1)
+    .max(32)
+    .describe(
+      "Keep markets whose collateral symbol matches, case-insensitively, for example mAPOLLO. Omit for every collateral."
+    )
+    .optional(),
+  debt: z
+    .string()
+    .min(1)
+    .max(32)
+    .describe(
+      "Keep markets whose debt symbol matches, case-insensitively, for example USDC. Omit for every debt token."
+    )
+    .optional(),
+};
+
 export const getMarketApyHistoryInput = {
   protocol,
   marketId,

@@ -9,13 +9,15 @@ Use it when an agent needs to look up yield products, leveraged opportunities, o
 | Tool | API request | What you get back |
 | --- | --- | --- |
 | `list_assets` | `GET /api/v2/assets` | One row per product: `assetId`, name, ticker, platform, symbols, TVL, APY, and `nextOffset` |
-| `get_asset` | `GET /api/v2/assets/{assetId}` | The full product. Pass `assetId` from `list_assets` unchanged |
-| `list_opportunities` | `GET /api/v2/opportunities` | One row per opportunity: id, asset, venue, collateral, debt, net APY, leverage, and `nextOffset` |
-| `get_opportunity` | `GET /api/v2/opportunities/{opportunityId}` | The full opportunity. Pass `opportunityId` from the list unchanged |
-| `list_markets` | `GET /api/v2/markets` | One row per market: `protocolId`, `marketId`, collateral, debt, LTV, and rate |
+| `get_asset` | `GET /api/v2/assets/{assetId}` | Identity, terms, APY, and TVL. Pass `assetId` from `list_assets` unchanged |
+| `list_opportunities` | `GET /api/v2/opportunities` | One row per opportunity: id, asset, venue, collateral, debt, base yield, net APY, leverage, and `nextOffset` |
+| `get_opportunity` | `GET /api/v2/opportunities/{opportunityId}` | The same figures as the list row, for one id. Pass `opportunityId` unchanged |
+| `list_markets` | `GET /api/v2/markets` | One row per market: `protocolId`, `marketId`, collateral, debt, LTV, and rate. Optional filters narrow that list |
 | `get_market_apy_history` | `GET /api/v2/markets/{protocol}/{marketId}/apy-history` | Window, borrow summary, points, and `nextCursor` |
 
-There are no other tools. List tools do not return the raw API document. They leave out route calldata and other fields that belong on the single-record read. `get_asset` and `get_opportunity` return that record.
+There are no other tools. None of them return purchase, redemption, or acquisition routes. List results include `asOfTime` when the API sends it.
+
+`list_markets` reads the whole market list in one request. `network`, `protocolId`, `collateral`, and `debt` then narrow those rows. They are not sent as API query parameters. A filter result sets `page.total` to the unfiltered count and `page.matched` to the rows kept.
 
 When `nextOffset` is a number, call the same list tool again with that offset. When it is null, the page is the last one. `list_assets` and `list_opportunities` ask for 10 rows when `limit` is omitted. The API accepts 1 to 100. Opportunity offset stops at 10000.
 

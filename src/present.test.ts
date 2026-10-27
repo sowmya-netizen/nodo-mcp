@@ -108,11 +108,52 @@ test("apy history keeps the cursor and the points", () => {
   assert.match(text, /"pointCount": 1/);
 });
 
-test("a single read returns the resource, not the list projection", () => {
+test("a single asset read keeps terms and drops acquisition routes", () => {
   const text = presentRead("get_asset", {
-    data: { id: "asset-1", display: { name: "HYB" }, acquisitionRoutes: [] },
+    data: {
+      id: "asset-1",
+      display: { name: "HYB", ticker: "HYB" },
+      terms: { access: "permissionless", isInvestable: true },
+      economics: { apy: "0.05", freshness: "fresh" },
+      acquisitionRoutes: [{ calldata: "0xdead" }],
+    },
   });
-  assert.match(text, /"id": "asset-1"/);
-  assert.match(text, /acquisitionRoutes/);
+  assert.match(text, /"assetId": "asset-1"/);
+  assert.match(text, /permissionless/);
+  assert.match(text, /"apy": "0.05"/);
+  assert.doesNotMatch(text, /0xdead/);
   assert.doesNotMatch(text, /nextOffset/);
 });
+
+test("market filters keep one venue from the full list", () => {
+  const body = {
+    data: {
+      markets: [
+        marketRow("morpho-blue", "mAPOLLO", "USDC"),
+        marketRow("aave-v3", "USDC", "USDT"),
+      ],
+    },
+  };
+  const text = presentRead("list_markets", body, {
+    marketFilter: { protocolId: "Morpho-Blue", collateral: "mapollo" },
+  });
+  assert.match(text, /morpho-blue/);
+  assert.doesNotMatch(text, /aave-v3/);
+  assert.match(text, /"matched": 1/);
+  assert.match(text, /"total": 2/);
+});
+
+function marketRow(protocolId: string, collateral: string, debt: string) {
+  return {
+    network: "ethereum",
+    executionAvailable: true,
+    market: {
+      definition: {
+        id: { protocolId, nativeId: `${protocolId}-market` },
+        collateralToken: { symbol: collateral },
+        debtToken: { symbol: debt },
+      },
+      economics: { rate: { kind: "variable" } },
+    },
+  };
+}
