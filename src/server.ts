@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NodoConfig } from "./credentials.js";
 import { redactSecret } from "./credentials.js";
 import { nodoGet, type QueryEntry } from "./http.js";
+import { presentRead, type ReadKind } from "./present.js";
 import {
   getAssetInput,
   getMarketApyHistoryInput,
@@ -17,15 +18,17 @@ const READ_ONLY = {
   openWorldHint: true,
 } as const;
 
+const LIST_PAGE = 10;
+
 const ONLY_READS =
   "Read-only. This server cannot open, close, or estimate positions.";
 
 export function createNodoServer(config: NodoConfig): McpServer {
   const server = new McpServer(
-    { name: "nodo", version: "0.1.0" },
+    { name: "nodo", version: "0.2.0" },
     {
       instructions:
-        "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions.",
+        "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions. List tools return one compact row per record and a next offset when another page exists. Copy assetId into get_asset and opportunityId into get_opportunity. Copy protocolId and marketId into get_market_apy_history. A failed read is a tool error, including when the API returns HTTP 200 with an error code.",
     }
   );
 
@@ -33,16 +36,21 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_assets",
     {
       title: "List assets",
-      description: `List NODO yield products. GET /assets. ${ONLY_READS}`,
+      description: `List NODO yield products. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy assetId into get_asset. ${ONLY_READS}`,
       inputSchema: listAssetsInput,
       annotations: READ_ONLY,
     },
     async (args) =>
-      read(config, ["assets"], [
-        ["chainId", args.chainId],
-        ["limit", args.limit],
-        ["offset", args.offset],
-      ])
+      read(
+        config,
+        ["assets"],
+        [
+          ["chainId", args.chainId],
+          ["limit", args.limit ?? LIST_PAGE],
+          ["offset", args.offset],
+        ],
+        "list_assets"
+      )
   );
 
   server.registerTool(
@@ -53,14 +61,14 @@ export function createNodoServer(config: NodoConfig): McpServer {
       inputSchema: getAssetInput,
       annotations: READ_ONLY,
     },
-    async (args) => read(config, ["assets", args.assetId], [])
+    async (args) => read(config, ["assets", args.assetId], [], "get_asset")
   );
 
   server.registerTool(
     "list_opportunities",
     {
       title: "List opportunities",
-      description: `List leveraged yield opportunities. GET /opportunities. ${ONLY_READS}`,
+      description: `List leveraged yield opportunities. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
       inputSchema: listOpportunitiesInput,
       annotations: READ_ONLY,
     },
@@ -80,9 +88,10 @@ export function createNodoServer(config: NodoConfig): McpServer {
         ["maxNetApy", args.maxNetApy],
         ["sortBy", args.sortBy],
         ["sortDirection", args.sortDirection],
-        ["limit", args.limit],
+        ["limit", args.limit ?? LIST_PAGE],
         ["offset", args.offset],
-      ])
+      ],
+      "list_opportunities")
   );
 
   server.registerTool(
@@ -93,25 +102,26 @@ export function createNodoServer(config: NodoConfig): McpServer {
       inputSchema: getOpportunityInput,
       annotations: READ_ONLY,
     },
-    async (args) => read(config, ["opportunities", args.opportunityId], [])
+    async (args) =>
+      read(config, ["opportunities", args.opportunityId], [], "get_opportunity")
   );
 
   server.registerTool(
     "list_markets",
     {
       title: "List markets",
-      description: `List lending markets that accept collateral. GET /markets. ${ONLY_READS}`,
+      description: `List lending markets that accept collateral. Copy protocolId and marketId into get_market_apy_history. ${ONLY_READS}`,
       inputSchema: {},
       annotations: READ_ONLY,
     },
-    async () => read(config, ["markets"], [])
+    async () => read(config, ["markets"], [], "list_markets")
   );
 
   server.registerTool(
     "get_market_apy_history",
     {
       title: "Get market APY history",
-      description: `Get yield and borrowing-rate history for one market. GET /markets/{protocol}/{marketId}/apy-history. ${ONLY_READS}`,
+      description: `Get yield and borrowing-rate history for one market. Uses protocolId and marketId from list_markets. When nextCursor is set, call again with that cursor. ${ONLY_READS}`,
       inputSchema: getMarketApyHistoryInput,
       annotations: READ_ONLY,
     },
@@ -124,7 +134,8 @@ export function createNodoServer(config: NodoConfig): McpServer {
         ["to", args.to],
         ["limit", args.limit],
         ["cursor", args.cursor],
-      ])
+      ],
+      "get_market_apy_history")
   );
 
   return server;
@@ -133,11 +144,12 @@ export function createNodoServer(config: NodoConfig): McpServer {
 async function read(
   config: NodoConfig,
   segments: readonly string[],
-  query: readonly QueryEntry[]
+  query: readonly QueryEntry[],
+  kind: ReadKind
 ) {
   try {
     const body = await nodoGet(config, segments, query);
-    const text = typeof body === "string" ? body : JSON.stringify(body, null, 2);
+    const text = typeof body === "string" ? body : presentRead(kind, body);
     return {
       content: [{ type: "text" as const, text: redactSecret(text, config.apiSecret) }],
     };

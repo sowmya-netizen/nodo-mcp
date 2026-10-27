@@ -46,7 +46,7 @@ export const listAssetsInput = {
     .min(1)
     .max(100)
     .describe(
-      "Maximum products in this page; defaults to 25 when omitted. For the next page, add the returned count to offset."
+      "Maximum products in this page. When omitted, this server asks for 10. The API allows 1 to 100. For the next page, pass the nextOffset from the previous result."
     )
     .optional(),
   offset: z
@@ -186,7 +186,9 @@ export const listOpportunitiesInput = {
     .int()
     .min(1)
     .max(100)
-    .describe("Maximum opportunities in this page. Omit to use the API default.")
+    .describe(
+      "Maximum opportunities in this page. When omitted, this server asks for 10. The API allows 1 to 100. For the next page, pass the nextOffset from the previous result."
+    )
     .optional(),
   offset: z
     .number()

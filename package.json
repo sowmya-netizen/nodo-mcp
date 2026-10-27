@@ -1,6 +1,6 @@
 {
   "name": "nodo-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read-only MCP server for NODO assets, opportunities, and markets.",
   "type": "module",
   "bin": {
@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc",
     "pretest": "tsc",
-    "test": "node --test dist/server.test.js"
+    "test": "node --test dist/*.test.js"
   },
   "repository": {
     "type": "git",

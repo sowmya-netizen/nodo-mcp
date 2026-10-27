@@ -163,6 +163,83 @@ test("a malformed secret fails before fetch and is absent from the error", async
   assert.equal(fetches, 0);
 });
 
+test("an omitted list limit asks the API for 10 rows", async () => {
+  const { apiSecret } = throwawayCredential();
+  const calls: Captured[] = [];
+  await withClient(
+    config(apiSecret, async (input, init) => {
+      calls.push(capture(input, init));
+      return jsonResponse({
+        data: { counts: { total: 0, returned: 0 }, query: { limit: 10, offset: 0 }, assets: [] },
+      });
+    }),
+    (client) => client.callTool({ name: "list_assets", arguments: {} })
+  );
+  assert.equal(calls[0]?.url, "https://app.nodo.xyz/api/v2/assets?limit=10");
+});
+
+test("list_opportunities returns the compact row and the next offset", async () => {
+  const { apiSecret } = throwawayCredential();
+  const result = await withClient(
+    config(apiSecret, async () =>
+      jsonResponse({
+        data: {
+          counts: { total: 4, matched: 4, returned: 1 },
+          query: { limit: 1, offset: 0 },
+          opportunities: [
+            {
+              id: "opportunity-v2:ethereum:demo",
+              asset: { id: "9", display: { name: "Demo" } },
+              borrowMarket: { protocolId: "morpho-blue", nativeId: "0x1" },
+              acquisitionRoutes: [{ secretPath: "do-not-show" }],
+            },
+          ],
+        },
+      })
+    ),
+    (client) =>
+      client.callTool({ name: "list_opportunities", arguments: { limit: 1 } })
+  );
+  const serialized = JSON.stringify(result);
+  assert.equal(result.isError, undefined);
+  assert.match(serialized, /opportunity-v2:ethereum:demo/);
+  assert.match(serialized, /nextOffset/);
+  assert.doesNotMatch(serialized, /do-not-show/);
+});
+
+test("an HTTP 200 API error envelope is a tool error", async () => {
+  const { apiSecret } = throwawayCredential();
+  const result = await withClient(
+    config(apiSecret, async () =>
+      jsonResponse({
+        error: {
+          code: "auth_invalid",
+          message: `API key is invalid or revoked ${apiSecret}`,
+          details: { hint: apiSecret },
+        },
+      })
+    ),
+    (client) => client.callTool({ name: "list_markets", arguments: {} })
+  );
+  const serialized = JSON.stringify(result);
+  assert.equal(result.isError, true);
+  assert.match(serialized, /NODO API auth_invalid/);
+  assert.match(serialized, /\[redacted\]/);
+  assertNoSecret(serialized, apiSecret);
+});
+
+test("a resource body that mentions error is still a successful read", async () => {
+  const { apiSecret } = throwawayCredential();
+  const result = await withClient(
+    config(apiSecret, async () =>
+      jsonResponse({ assets: [{ id: "asset-1", note: "no error field here" }] })
+    ),
+    (client) => client.callTool({ name: "list_assets", arguments: { limit: 1 } })
+  );
+  assert.equal(result.isError, undefined);
+  assert.match(JSON.stringify(result), /asset-1/);
+});
+
 test("the API secret is absent from a tool result and a tool error", async () => {
   const { apiSecret } = throwawayCredential();
   const leakedBody = `upstream said ${apiSecret}`;

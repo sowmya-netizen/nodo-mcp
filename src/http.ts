@@ -69,11 +69,43 @@ export async function nodoGet(
     );
   }
   if (body === "") return null;
+  let parsed: unknown;
   try {
-    return JSON.parse(body) as unknown;
+    parsed = JSON.parse(body) as unknown;
   } catch {
     return body;
   }
+  const apiError = apiErrorMessage(parsed);
+  if (apiError !== null) {
+    throw publicError(config.apiSecret, apiError);
+  }
+  return parsed;
+}
+
+/**
+ * Product v2 answers failed reads with HTTP 200 and `{ error: { code, message } }`.
+ * A successful body is the resource itself, so only that exact envelope is a failure.
+ */
+export function apiErrorMessage(body: unknown): string | null {
+  if (!isRecord(body) || Object.keys(body).some((key) => key !== "error")) {
+    return null;
+  }
+  const error = body.error;
+  if (
+    !isRecord(error) ||
+    typeof error.code !== "string" ||
+    error.code === "" ||
+    typeof error.message !== "string"
+  ) {
+    return null;
+  }
+  const details =
+    error.details === undefined ? "" : ` ${JSON.stringify(error.details)}`;
+  return `NODO API ${error.code}: ${error.message}${details}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function encodePathSegment(segment: string): string {
