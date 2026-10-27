@@ -1,0 +1,34 @@
+{
+  "name": "nodo-mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for NODO assets, opportunities, and markets.",
+  "type": "module",
+  "bin": {
+    "nodo-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "server.json"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "pretest": "tsc",
+    "test": "node --test dist/server.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sowmya-netizen/nodo-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2"
+  }
+}
