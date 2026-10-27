@@ -1,0 +1,33 @@
+# nodo-mcp
+
+> 只读查看生息资产、可以以这些资产为抵押的借款，以及这些市场已经支付过的利率。
+
+[English](llms.txt) 是默认目录。本文件是中文目录。[日本語](llms.ja.txt)
+
+有些资产会支付收益。代币化国债和私人信贷是常见例子。同一项资产可以当作抵押并借出资金，通常是美元。多出来的收益，只有在资产收益高于借款成本、借款停留在抵押品被出售的水平之下、并且数字来自今天时，才算数。
+
+为客户余额比较资产的新型银行、比较借款的持有人，以及要展示这些市场的其他项目，读的是同一份名单。NODO 保持这份名单为当前，并发布在 https://app.nodo.xyz/api/v2 。NODO 不保管资金。本仓库只读取这份名单。准备借款仍在该 API 上完成。
+
+## 从这里开始
+
+- [名单，以及如何运行程序](README.zh.md)
+- [英文说明](README.md) 是默认页面 · [日本語](README.ja.md)
+- [Claude 的规则](CLAUDE.md)
+- [Codex、Kimi Code、Cursor 与 Copilot 的规则](AGENTS.md)
+- [Gemini CLI 的规则](GEMINI.md)
+- [GitHub Copilot 的规则](.github/copilot-instructions.md)
+
+## 如何查找
+
+- [生息资产，以及以它为抵押的借款](docs/zh/find-yield.md)
+- [借贷市场及其利率历史](docs/zh/read-markets.md)
+- 工具调用的英文指南：[资产与借款](skills/find-nodo-yield/SKILL.md) · [市场](skills/read-nodo-markets/SKILL.md)
+
+## 可以问什么
+
+- `list_assets`，然后 `get_asset`：资产、收益、规模和条款
+- `list_opportunities`，然后 `get_opportunity`：一项资产在一个市场里，扣除利息后的收益，以及低于抵押品被出售之点的最大借款
+- `list_markets`：市场，可按名称、抵押品或借入的资产缩小范围
+- `get_market_apy_history`：一个市场支付过多少，借款成本是多少
+
+名单默认大约十行。`nextOffset` 标出下一页。`asOfTime` 是数字的读取时间。

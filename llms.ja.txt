@@ -1,0 +1,33 @@
+# nodo-mcp
+
+> 利回りを生む資産、それを担保にした借り入れ、そしてその市場がこれまで払ってきた利率を、読み取り専用で見る。
+
+既定は [English](llms.txt) である。これは日本語の索引。[中文](llms.zh.txt)
+
+利回りを払う資産がある。トークン化された国債やプライベートクレジットがその例である。同じ資産は担保にして借りることができ、借りるものは通常ドルである。増えたリターンが実在するのは、資産の利回りが借り入れの費用を上回り、借り入れが担保の売却水準より下にあり、数字が今日のものであるときだけである。
+
+顧客残高の資産を比べるネオバンク、借り入れを比べる保有者、これらの市場を出す別のプロジェクトは、同じ一覧を読む。NODO はその一覧を現在の状態に保ち、https://app.nodo.xyz/api/v2 で公開する。NODO は資金を預からない。このリポジトリは一覧を読むだけである。借り入れの準備は API で行う。
+
+## 最初に読む
+
+- [一覧と、プログラムの動かし方](README.ja.md)
+- 既定のページは [英語](README.md) · [中文](README.zh.md)
+- [Claude の規則](CLAUDE.md)
+- [Codex、Kimi Code、Cursor、Copilot の規則](AGENTS.md)
+- [Gemini CLI の規則](GEMINI.md)
+- [GitHub Copilot の規則](.github/copilot-instructions.md)
+
+## 調べ方
+
+- [利回り資産と、それを担保にした借り入れ](docs/ja/find-yield.md)
+- [貸出市場と金利の履歴](docs/ja/read-markets.md)
+- ツールが読む英語の案内：[資産と借り入れ](skills/find-nodo-yield/SKILL.md) · [市場](skills/read-nodo-markets/SKILL.md)
+
+## 聞けること
+
+- `list_assets` のあと `get_asset`：資産、利回り、規模、条件
+- `list_opportunities` のあと `get_opportunity`：一つの資産と一つの市場、利息のあとの利回り、担保が売却される点より手前の最大の借り入れ
+- `list_markets`：市場。名前、担保、借りる資産で絞れる
+- `get_market_apy_history`：市場がいくら払い、借りるといくらかかったか
+
+一覧は増やさない限りおよそ 10 行である。`nextOffset` が次のページを示す。`asOfTime` は数字を読んだ時刻である。

@@ -1,11 +1,11 @@
 ---
 name: read-nodo-markets
-description: Read NODO lending desks, loan-to-value, and rate history. Use when someone asks which desk accepts an asset as collateral, the loan-to-value of a margin call, the cost of funds, or rate history. Do not use it to book a loan or move customer money.
+description: Read NODO lending markets and their yield and borrow history. Use when someone asks which market accepts an asset as collateral, the level at which the loan is closed out, the borrow rate, or rate history. Do not use it to open a loan.
 ---
 
-# Read a lending desk
+# Read a lending market
 
-A lending desk is where a savings asset can be pledged and dollars borrowed against it. Treasury needs the cost of funds and the loan-to-value at which the collateral is sold. This only reads. It does not borrow, and it does not trigger a margin call.
+A lending market is where a yield-bearing asset can be posted as collateral and borrowed against. The question is what the loan costs, and the level at which the collateral would be sold. This only reads. It does not borrow.
 
 Use the `nodo` server. If it is not connected, stop and say so. Do not invent pools.
 
@@ -24,4 +24,4 @@ Use the `nodo` server. If it is not connected, stop and say so. Do not invent po
 
 ## Stop
 
-Do not turn a desk into a booked loan. Do not price a payment or move customer money. If someone wants to borrow, say this program cannot do that.
+Do not turn a market into a loan. If someone wants to borrow, say this program cannot do that.

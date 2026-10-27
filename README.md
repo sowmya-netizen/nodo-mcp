@@ -1,45 +1,49 @@
+English · [中文](README.zh.md) · [日本語](README.ja.md)
+
 # nodo-mcp
 
-A read-only feed of savings assets, what they pay, and what it costs to borrow against them.
+A read-only look at yield-bearing assets, the loans available against them, and what those markets have paid.
 
 ## The situation
 
-A neobank takes deposits and pays customers a rate. The cash behind those balances has to earn more than that rate, or the product loses money.
+Some assets pay a yield. Tokenized government debt and private credit are common examples. The same asset can be posted as collateral, so the holder can borrow against it, usually in dollars, and sometimes buy more of the asset with the proceeds.
 
-One way to earn the spread is to place cash into short-dated assets, such as government debt or private credit, and in some cases to borrow against those assets and buy more of them. The spread is the asset yield minus the interest on the borrowing. It only holds if three things are true at once:
+The extra return is real only when three things are true at the same time:
 
-- The asset pays more than the cost of funds.
-- The loan stays under the loan-to-value where the collateral is sold. That is the margin call.
-- The rates are from today. Yesterday's funding cost is not a price you can lock.
+- The asset's yield is higher than the interest on the loan.
+- The loan stays under the level where the collateral is sold.
+- The figures are current. A rate from yesterday is not a rate available today.
 
-Those figures sit at several lending desks, each with its own rules. Checking them by hand, or from a spreadsheet saved yesterday, is how a savings rate gets offered on stale numbers.
+Those figures sit in several lending markets, each with its own rules and history. Checking them one by one, or from a copy saved yesterday, means acting on a number that may already have moved.
+
+A neobank comparing assets for customer balances, a holder comparing loans, and another project showing these markets in its own product all need the same current list.
 
 ## What NODO is
 
-NODO is the live book a treasury or product team reads before it prices that savings rate. Customer money stays at the neobank. NODO does not hold deposits. It collects three lists from the lending desks:
+NODO collects that list and keeps it current. It does not hold the money. The list has three parts:
 
-- **Products.** The assets cash can go into: name, ticker, issuer, what they are paying, and how large they are.
-- **Opportunities.** One asset used as collateral at one desk. This is the spread: yield left after funding cost, and the largest loan that still sits short of a margin call.
-- **Markets.** The desks themselves: what they accept as collateral, what they lend (usually dollars), the loan-to-value at which they sell the collateral, and the history of what they have charged.
+- **Products.** The yield-bearing assets: name, ticker, issuer, what they are paying, and how large they are.
+- **Opportunities.** One asset posted as collateral in one market: the yield left after interest, and the largest loan that still sits short of the point where the collateral is sold.
+- **Markets.** The lending markets themselves: which asset is collateral, which asset is borrowed, the level at which the collateral is sold, and the rate history.
 
-NODO publishes the book at `https://app.nodo.xyz/api/v2`. That same API is where a loan would later be prepared, under the neobank's own approval. This project does not do that.
+NODO publishes the list at `https://app.nodo.xyz/api/v2`. Preparing a real loan stays on that API. This project does not do that.
 
 ## What this project is
 
-`nodo-mcp` lets an internal tool read the book: the asset yield, the cost of funds, the loan-to-value, and the rate history. It is a data feed, not a payment rail.
+`nodo-mcp` reads the list and returns a short answer: which asset, what it pays, what the loan costs, and what the market has paid recently.
 
-It cannot move customer money, book a loan, or return the instructions for buying or redeeming an asset. A person still approves that on NODO's API.
+It cannot borrow, buy, sell, or return the instructions for buying or redeeming an asset. The person or project that decides to commit money still uses NODO's API for that.
 
-The feed needs a NODO login, and that login can be limited to reading. This program cannot widen it.
+A login issued by NODO is required. The login can be limited to reading. This program does not raise that limit.
 
 ## Questions it can answer
 
-| Question a treasury or product team asks | Start here | Then |
+| Question | Start here | Then |
 | --- | --- | --- |
-| Which assets can back a savings rate, and what do they pay? | `list_assets` | `get_asset` with the `assetId` from that list |
-| If we borrow against one asset, what spread is left after funding cost? | `list_opportunities` | `get_opportunity` with the `opportunityId` |
-| Which desks accept this collateral, and at what loan-to-value is there a margin call? | `list_markets` | Narrow by desk, collateral, or the currency borrowed |
-| What has this desk paid, and what has it charged to borrow? | `get_market_apy_history` | Use `protocolId` and `marketId` from the market list |
+| Which yield-bearing assets are listed, and what are they paying? | `list_assets` | `get_asset` with the `assetId` from that list |
+| If this asset is used as collateral, what yield is left after interest? | `list_opportunities` | `get_opportunity` with the `opportunityId` |
+| Which markets accept this collateral, and when would the loan be closed out? | `list_markets` | Narrow by market, collateral, or the asset borrowed |
+| What has this market paid, and what has it cost to borrow? | `get_market_apy_history` | Use `protocolId` and `marketId` from the market list |
 
 A list returns about ten rows unless you ask for more (up to 100). `nextOffset` tells you where the next page starts. A null `nextOffset` means there is no further page. `asOfTime` is when the figures were read, when the API includes it.
 
@@ -80,7 +84,7 @@ Both read the same JSON shape. Cursor uses `mcp.json`. Claude Desktop uses `~/Li
 }
 ```
 
-Claude Code in this repository reads [CLAUDE.md](CLAUDE.md). You can also point it at the same JSON with `claude mcp add`.
+Claude Code in this repository reads [CLAUDE.md](CLAUDE.md). You can also point it at the same JSON with `claude mcp add`. The same JSON works as a project `.mcp.json`, which Claude Code and Kimi Code both read.
 
 ### Codex
 
@@ -96,12 +100,28 @@ NODO_API_KEY = "nodo_<key-id>"
 NODO_API_SECRET = "<secret shown once when the login was created>"
 ```
 
-The same two guides are picked up from `skills/` by Cursor (`.cursor/skills`), Claude (`.claude/skills`), and Codex (`.agents/skills`):
+### Kimi Code
 
-- [How to look up a savings asset and the spread after funding cost](skills/find-nodo-yield/SKILL.md)
-- [How to look up a lending desk, loan-to-value, and rate history](skills/read-nodo-markets/SKILL.md)
+Kimi Code, including Kimi K3, reads [AGENTS.md](AGENTS.md). There is no separate Kimi instruction file. Copy [examples/kimi.mcp.json](examples/kimi.mcp.json) to `.kimi-code/mcp.json` in this project, or to `~/.kimi-code/mcp.json` for every project. A project file wins when both exist.
 
-[llms.txt](llms.txt) is a short map of this repository for a reader who has not seen it before.
+### Gemini CLI
+
+Gemini CLI reads [GEMINI.md](GEMINI.md). Copy [examples/gemini.settings.json](examples/gemini.settings.json) to `.gemini/settings.json` in this project, or to `~/.gemini/settings.json`.
+
+### GitHub Copilot
+
+Copilot reads [AGENTS.md](AGENTS.md) and [.github/copilot-instructions.md](.github/copilot-instructions.md). In VS Code, copy [examples/vscode.mcp.json](examples/vscode.mcp.json) to `.vscode/mcp.json`.
+
+Cursor, Copilot's coding agent, and Cline also read [AGENTS.md](AGENTS.md). The rules in that file, in [CLAUDE.md](CLAUDE.md), and in [GEMINI.md](GEMINI.md) are the same.
+
+The two guides are picked up from `skills/` by Cursor (`.cursor/skills`), Claude (`.claude/skills`), Codex and Kimi (`.agents/skills`):
+
+- [How to look up a yield-bearing asset and a loan against it](skills/find-nodo-yield/SKILL.md)
+- [How to look up a lending market and its rate history](skills/read-nodo-markets/SKILL.md)
+
+[中文说明](README.zh.md) · [日本語](README.ja.md)
+
+[llms.txt](llms.txt) is a short map of this repository. [中文](llms.zh.txt) · [日本語](llms.ja.txt)
 
 ## When a request fails
 

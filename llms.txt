@@ -1,27 +1,32 @@
 # nodo-mcp
 
-> A read-only feed of savings assets, what they pay, and what it costs to borrow against them.
+> A read-only look at yield-bearing assets, the loans available against them, and what those markets have paid.
 
-A neobank pays customers a rate on deposits. The cash behind those balances has to earn more than that rate. One way to earn the spread is to place cash in short-dated assets, such as government debt or private credit, and sometimes to borrow against those assets. The spread is the asset yield minus the cost of funds. It disappears if the loan passes the loan-to-value where the collateral is sold, or if the rates are no longer today's rates.
+Some assets pay a yield. Tokenized government debt and private credit are common examples. The same asset can be posted as collateral and borrowed against, usually in dollars. The extra return is real only when the asset pays more than the loan costs, the loan stays short of the point where the collateral is sold, and the figures are from today.
 
-NODO does not hold the deposits. It keeps the live book a treasury or product team reads before pricing the savings rate: the assets, the spread after funding cost, and the lending desks. The book is at https://app.nodo.xyz/api/v2. This repository only reads it. Booking a loan stays on that API, under the neobank's own approval.
+A neobank comparing assets, a holder comparing loans, and another project showing these markets all read the same list. NODO keeps that list current and publishes it at https://app.nodo.xyz/api/v2. NODO does not hold the money. This repository only reads the list. Preparing a loan stays on the API.
+
+English is the default. [中文](llms.zh.txt) · [日本語](llms.ja.txt)
 
 ## Start here
 
-- [The book, and how to connect a reader](README.md): deposits, spread, margin call, and how Claude, Codex, or Cursor connect
-- [Rules for Claude](CLAUDE.md): read the book, do not book a loan
-- [Rules for Codex](AGENTS.md): the same rules
+- [The list, and how to run the program](README.md): the assets, the loans, the markets, and how to connect a reader
+- [中文](README.zh.md) · [日本語](README.ja.md)
+- [Rules for Claude](CLAUDE.md): read the list, leave the loan on the API
+- [Rules for Codex, Kimi Code, Cursor, and Copilot](AGENTS.md): the same rules
+- [Rules for Gemini CLI](GEMINI.md): the same rules
+- [Rules for GitHub Copilot](.github/copilot-instructions.md): the same rules
 
 ## How to look something up
 
-- [Savings assets and the spread after funding cost](skills/find-nodo-yield/SKILL.md): what an asset pays, and what is left after interest
-- [Lending desks and rate history](skills/read-nodo-markets/SKILL.md): which desk takes the collateral, the loan-to-value of a margin call, and what the desk has charged
+- [Yield-bearing assets and loans against them](skills/find-nodo-yield/SKILL.md): what an asset pays, and what is left after interest
+- [Lending markets and rate history](skills/read-nodo-markets/SKILL.md): which market takes the collateral, when the loan would be closed out, and what the market has charged
 
 ## What a caller can ask
 
 - `list_assets`, then `get_asset`: the assets, their yield, their size, and their terms
-- `list_opportunities`, then `get_opportunity`: one asset at one desk, the spread after funding cost, and the largest loan short of a margin call
-- `list_markets`: the desks, narrowed by name, collateral, or currency borrowed
-- `get_market_apy_history`: what a desk has paid, and what it has cost to borrow
+- `list_opportunities`, then `get_opportunity`: one asset in one market, the yield after interest, and the largest loan short of the point where the collateral is sold
+- `list_markets`: the markets, narrowed by name, collateral, or the asset borrowed
+- `get_market_apy_history`: what a market has paid, and what it has cost to borrow
 
-Lists return about ten rows unless a larger page is requested. `nextOffset` marks the next page. `asOfTime` is when the figures were taken.
+Lists return about ten rows unless a larger page is requested. `nextOffset` marks the next page. `asOfTime` is when the figures were read.

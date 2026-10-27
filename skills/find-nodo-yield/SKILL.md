@@ -1,11 +1,11 @@
 ---
 name: find-nodo-yield
-description: Look up savings assets and the spread after funding cost in NODO's live book. Use when someone asks what an asset pays, which collateralised loans exist, net yield after interest, collateral, or the currency borrowed. Do not use it to book a loan or move customer money.
+description: Look up yield-bearing assets and the loans available against them in NODO's live list. Use when someone asks what an asset pays, which loans exist, the yield left after interest, the collateral, or the borrowed asset. Do not use it to open or submit a loan.
 ---
 
-# Find a savings asset and the spread
+# Find a yield-bearing asset or a loan against it
 
-A neobank pays a rate on deposits. NODO's book shows which assets can earn that rate, and what is left after the cost of borrowing against them. Customer money stays at the neobank. Read the book. Do not book a loan or move money.
+NODO keeps one current list of yield-bearing assets and of loans that use those assets as collateral. A neobank, a holder, and another project can all read it. Read the list. Do not borrow, buy, or prepare a loan.
 
 Use the `nodo` server. If it is not connected, stop and say so. Do not invent rows.
 
@@ -19,7 +19,7 @@ Use the `nodo` server. If it is not connected, stop and say so. Do not invent ro
 
 ## Opportunities
 
-An opportunity is one savings asset pledged as collateral at one lending desk. The number a treasury team needs is the spread left after funding cost, and the largest loan that still sits short of a margin call.
+An opportunity is one yield-bearing asset posted as collateral in one lending market. The useful figures are the yield left after interest, and the largest loan that still sits short of the point where the collateral is sold.
 
 1. Call `list_opportunities`. Use `search` for a ticker or name. Use `yieldToken`, `protocolIds`, `debtToken`, or `minNetApy` when the user named them.
 2. Call `get_opportunity` with `opportunityId` copied unchanged.
@@ -29,4 +29,4 @@ An opportunity is one savings asset pledged as collateral at one lending desk. T
 
 ## Stop
 
-If someone asks to size, open, authorize, or confirm a loan, or to move customer money, say this program cannot do that. The NODO API is where a loan is prepared, under the neobank's own approval. Do not look for another tool here to get around that.
+If someone asks to size, open, authorize, or confirm a loan, say this program cannot do that. The NODO API is where a loan is prepared. Do not look for another tool here to get around that.
