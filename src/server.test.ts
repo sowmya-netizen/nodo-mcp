@@ -118,6 +118,56 @@ test("get_market_apy_history signs the /api/v2 path and query it requests", asyn
   assert.equal(verifyWorkloadSignature(call.authorization, der, "GET", signedPath), true);
 });
 
+test("an opportunity id is signed as one encoded path segment", async () => {
+  const { apiSecret, der } = throwawayCredential();
+  const calls: Captured[] = [];
+  await withClient(
+    config(apiSecret, async (input, init) => {
+      calls.push(capture(input, init));
+      return jsonResponse({ data: { id: "opportunity-v2:ethereum:demo" } });
+    }),
+    (client) =>
+      client.callTool({
+        name: "get_opportunity",
+        arguments: { opportunityId: "opportunity-v2:ethereum:demo" },
+      })
+  );
+  const call = calls[0];
+  assert.ok(call);
+  const signedPath = new URL(call.url).pathname + new URL(call.url).search;
+  assert.equal(signedPath, "/api/v2/opportunities/opportunity-v2%3Aethereum%3Ademo");
+  assert.equal(verifyWorkloadSignature(call.authorization, der, "GET", signedPath), true);
+  assert.equal(
+    verifyWorkloadSignature(
+      call.authorization,
+      der,
+      "GET",
+      "/api/v2/opportunities/opportunity-v2:ethereum:demo"
+    ),
+    false
+  );
+});
+
+test("a redirect is a failure and is not followed", async () => {
+  const { apiSecret } = throwawayCredential();
+  let fetches = 0;
+  await assert.rejects(
+    nodoGet(
+      config(apiSecret, async () => {
+        fetches += 1;
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://example.test/elsewhere" },
+        });
+      }),
+      ["assets"],
+      []
+    ),
+    /HTTP 302/
+  );
+  assert.equal(fetches, 1);
+});
+
 test("missing credentials fail before fetch", async () => {
   let fetches = 0;
   const previous = globalThis.fetch;

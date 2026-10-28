@@ -27,6 +27,8 @@ These calls are GETs, so the body is empty. Its SHA-256 is `e3b0c44298fc1c149afb
 
 The signed path is `pathname + search` of the fetched URL, including `/api/v2`. `GET https://app.nodo.xyz/api/v2/assets?limit=1` is signed as `/api/v2/assets?limit=1`. The route suffix `/assets?limit=1` does not verify. [src/http.ts](src/http.ts) builds that path and checks it round-trips through `new URL`.
 
+Ids are one path segment. An opportunity id contains colons, so `opportunity-v2:ethereum:demo` is signed as `/api/v2/opportunities/opportunity-v2%3Aethereum%3Ademo`. The form with literal colons does not verify. A redirect is not followed. The signature is bound to the URL that was requested, so a 3xx is a failure.
+
 `list_markets` is one GET of `/api/v2/markets` with an empty query, then filtered on this machine. `network`, `protocolId`, `collateral`, and `debt` never appear in the signed URL. `page.total` is the full list. `page.matched` is what remains after the filter.
 
 A refused read is often still HTTP 200. The body is then an object whose only key is `error`, with a string `code` and `message`. Anything else, including a resource that mentions the word error, is a successful read. `apiErrorMessage` is that test.
