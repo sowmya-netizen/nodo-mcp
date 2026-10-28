@@ -15,7 +15,11 @@ export type MarketFilter = Readonly<{
   debt?: string;
 }>;
 
-/** Turn an API body into the text a tool returns. Lists are one row per record. */
+/**
+ * Compact object a caller receives.
+ * Lists are one row per record. Purchase, redemption, and acquisition routes are omitted.
+ * Market filters run here, after one signed GET of /api/v2/markets with an empty query.
+ */
 export function presentRead(
   kind: ReadKind,
   body: unknown,

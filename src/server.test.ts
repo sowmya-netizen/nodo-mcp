@@ -361,6 +361,10 @@ function verifyWorkloadSignature(
   const spki = publicKey.export({ format: "der", type: "spki" });
   assert.equal(Buffer.from(spki).byteLength, 44);
   const bodySha256 = createHash("sha256").update("").digest("hex");
+  assert.equal(
+    bodySha256,
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  );
   const text = [
     "nodo-workload-v2",
     apiKey,
