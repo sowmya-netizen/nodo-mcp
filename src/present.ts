@@ -185,7 +185,9 @@ function projectOpportunity(row: Json): Json {
     protocolId: market?.protocolId ?? null,
     marketId: market?.nativeId ?? null,
     collateral: collateral?.symbol ?? null,
+    collateralToken: tokenRef(collateral),
     debt: debt?.symbol ?? null,
+    debtToken: tokenRef(debt),
     liquidationLtvBps: market?.liquidationLtvBps ?? null,
     maxLtvBps: market?.marketMaximumLtvBps ?? null,
     availableLiquidity: market?.availableLiquidity ?? null,
@@ -302,6 +304,20 @@ function blankToUndefined(value: string | undefined): string | undefined {
 
 function sameText(value: unknown, expected: string): boolean {
   return typeof value === "string" && value.toLowerCase() === expected.toLowerCase();
+}
+
+function tokenRef(token: Json | null): string | null {
+  const id = record(token?.id);
+  const chainId = id?.chainId;
+  const address = id?.address;
+  if (
+    (typeof chainId !== "number" && typeof chainId !== "string") ||
+    typeof address !== "string" ||
+    address === ""
+  ) {
+    return null;
+  }
+  return `${chainId}:${address}`;
 }
 
 function compactYield(value: unknown): unknown {

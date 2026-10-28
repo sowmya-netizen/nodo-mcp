@@ -19,8 +19,14 @@ test("list_opportunities keeps the id and the next page, and drops route payload
             network: "ethereum",
             protocolId: "morpho-blue",
             nativeId: "0xabc",
-            collateralToken: { symbol: "mAPOLLO" },
-            debtToken: { symbol: "USDC" },
+            collateralToken: {
+              symbol: "mAPOLLO",
+              id: { chainId: 1, address: "0x1111111111111111111111111111111111111111" },
+            },
+            debtToken: {
+              symbol: "USDC",
+              id: { chainId: 1, address: "0x2222222222222222222222222222222222222222" },
+            },
             rate: { kind: "variable", annualizedRate: "0.04" },
             liquidationLtvBps: "8600",
             marketMaximumLtvBps: "8600",
@@ -48,6 +54,7 @@ test("list_opportunities keeps the id and the next page, and drops route payload
   assert.match(text, /"liquidationLtvBps": "8600"/);
   assert.match(text, /"availableLiquidity": "1000000"/);
   assert.match(text, /"borrowApy": "0.04"/);
+  assert.match(text, /"debtToken": "1:0x2222222222222222222222222222222222222222"/);
   assert.doesNotMatch(text, /acquisitionRoutes/);
   assert.doesNotMatch(text, /0xdead/);
 });

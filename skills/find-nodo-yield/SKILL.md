@@ -21,7 +21,7 @@ Use the `nodo` server. If it is not connected, stop and say so. Do not invent ro
 
 An opportunity is one yield-bearing asset posted as collateral in one lending market. The useful figures are the yield left after interest, and the largest loan that still sits short of the point where the collateral is sold.
 
-1. Call `list_opportunities`. Use `search` for a ticker or name. Use `yieldToken`, `protocolIds`, `debtToken`, or `minNetApy` when the user named them.
+1. Call `list_opportunities`. Use `search` for a ticker or name. Use `yieldToken`, `protocolIds`, or `minNetApy` when the user named them. For one borrowed token, copy `debtToken` from a row (`1:0x…`). Do not build that value from a symbol.
 2. Call `get_opportunity` with `opportunityId` copied unchanged.
 3. Report venue (`protocolId`), collateral, debt, base yield, net APY, leverage, max LTV, and access. Quote `projectionStatus` when it is not `available`.
 

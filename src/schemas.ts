@@ -113,7 +113,7 @@ export const listOpportunitiesInput = {
     .string()
     .regex(/^1:0x[0-9a-fA-F]{40}$/)
     .describe(
-      "One exact borrowed token, written as chainId:address. Build it from the opportunity debt token chain id and address. Symbols belong in search, not this filter. Omit for all borrowed tokens."
+      "One exact borrowed token, written as chainId:address. Copy debtToken from a list_opportunities row. Symbols belong in search, not this filter. Omit for all borrowed tokens."
     )
     .optional(),
   category: z
