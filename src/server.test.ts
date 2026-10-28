@@ -68,6 +68,12 @@ test("list_assets sends one signed GET and the signature verifies locally", asyn
   assertNoSecret(call.authorization, apiSecret);
   for (const value of call.headers.values()) assertNoSecret(value, apiSecret);
   assert.equal(result.isError, undefined);
+  assert.ok(Array.isArray(result.content));
+  const textBlock = result.content[0] as { type?: string; text?: string };
+  assert.equal(textBlock.type, "text");
+  assert.equal(typeof textBlock.text, "string");
+  const text = textBlock.text ?? "";
+  assert.deepEqual(result.structuredContent, JSON.parse(text));
 
   const expiredAt = Number(call.authorization.split(",")[2]);
   assert.ok(expiredAt >= before + 30 && expiredAt <= after + 30);

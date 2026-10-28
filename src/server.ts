@@ -200,6 +200,18 @@ export function createNodoServer(config: NodoConfig): McpServer {
   return server;
 }
 
+function structuredObject(text: string): Record<string, unknown> | undefined {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 async function read(
   config: NodoConfig,
   segments: readonly string[],
@@ -209,9 +221,14 @@ async function read(
 ) {
   try {
     const body = await nodoGet(config, segments, query);
-    const text = typeof body === "string" ? body : presentRead(kind, body, options);
+    const text = redactSecret(
+      typeof body === "string" ? body : presentRead(kind, body, options),
+      config.apiSecret
+    );
+    const structuredContent = structuredObject(text);
     return {
-      content: [{ type: "text" as const, text: redactSecret(text, config.apiSecret) }],
+      content: [{ type: "text" as const, text }],
+      ...(structuredContent ? { structuredContent } : {}),
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "NODO request failed";
