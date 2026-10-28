@@ -1,6 +1,8 @@
 # nodo-mcp
 
-> A read-only look at yield-bearing assets, the loans available against them, and what those markets have paid.
+> Six signed GETs against NODO's list of yield-bearing assets, loans against them, and lending-market rates.
+
+Read [src/sign.ts](src/sign.ts) first. The signature is Ed25519 over six newline-joined lines: `nodo-workload-v2`, the api key, a unix expiry 30 seconds ahead, `GET`, `pathname + search` of the fetched URL (including `/api/v2`), and the SHA-256 hex of an empty body. A refused read is often HTTP 200 whose only key is `error`.
 
 Some assets pay a yield. Tokenized government debt and private credit are common examples. The same asset can be posted as collateral and borrowed against, usually in dollars. The extra return is real only when the asset pays more than the loan costs, the loan stays short of the point where the collateral is sold, and the figures are from today.
 

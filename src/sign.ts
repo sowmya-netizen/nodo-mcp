@@ -1,3 +1,12 @@
+// Authorization: `Bearer v2,<apiKey>,<expiredAt>,<sig>`
+// `sig` is Ed25519 (PKCS#8 DER private key) over this UTF-8 text, joined by "\n":
+//   nodo-workload-v2
+//   apiKey
+//   expiredAt          unix seconds, now + 30
+//   METHOD
+//   pathname + search  the fetched URL, so `/api/v2/...`, not the route suffix
+//   sha256 hex         of the body; these calls are GETs, so the body is empty
+// The secret is base64url after the prefix `nodo_ed25519_sk_`. It signs. It is not sent.
 import { createHash, createPrivateKey, sign } from "node:crypto";
 import {
   WORKLOAD_API_SECRET_PREFIX,

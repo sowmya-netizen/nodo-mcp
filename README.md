@@ -2,39 +2,45 @@ English · [中文](README.zh.md) · [日本語](README.ja.md)
 
 # nodo-mcp
 
-A read-only look at yield-bearing assets, the loans available against them, and what those markets have paid.
+Six signed GETs. That is the whole program.
 
-## The situation
+NODO publishes one current list: yield-bearing assets (tokenized government debt and private credit are the usual cases), the loans that use one of those assets as collateral, and the lending markets those loans sit in. The extra return is the asset yield minus the interest on the loan, and it is only real while the loan stays short of the point where the collateral is sold and the figures are from today. The list is at `https://app.nodo.xyz/api/v2`. This process reads it. Preparing a loan stays on that API.
 
-Some assets pay a yield. Tokenized government debt and private credit are common examples. The same asset can be posted as collateral, so the holder can borrow against it, usually in dollars, and sometimes buy more of the asset with the proceeds.
+A neobank comparing assets, a holder comparing loans, and another project showing the same markets all read this list. NODO does not hold the money.
 
-The extra return is real only when three things are true at the same time:
+## The part that is easy to get wrong
 
-- The asset's yield is higher than the interest on the loan.
-- The loan stays under the level where the collateral is sold.
-- The figures are current. A rate from yesterday is not a rate available today.
+Every request sends `Authorization: Bearer v2,<apiKey>,<expiredAt>,<sig>`.
 
-Those figures sit in several lending markets, each with its own rules and history. Checking them one by one, or from a copy saved yesterday, means acting on a number that may already have moved.
+`sig` is Ed25519 over six lines of UTF-8, joined by `\n`. The implementation is [src/sign.ts](src/sign.ts):
 
-A neobank comparing assets for customer balances, a holder comparing loans, and another project showing these markets in its own product all need the same current list.
+```
+nodo-workload-v2
+<api key>
+<unix expiry, now + 30 seconds>
+GET
+<pathname + query of the URL that is fetched>
+<sha256 hex of the body>
+```
 
-## What NODO is
+These calls are GETs, so the body is empty and the hash is the SHA-256 of the empty string. The private key is PKCS#8 DER, 48 bytes, base64url, after the prefix `nodo_ed25519_sk_`. It never leaves this machine.
 
-NODO collects that list and keeps it current. It does not hold the money. The list has three parts:
+The signed path is `pathname + search` of the fetched URL, including `/api/v2`. `GET https://app.nodo.xyz/api/v2/assets?limit=1` is signed as `/api/v2/assets?limit=1`. The route suffix `/assets?limit=1` does not verify. [src/http.ts](src/http.ts) builds that path and checks it round-trips through `new URL`.
 
-- **Products.** The yield-bearing assets: name, ticker, issuer, what they are paying, and how large they are.
-- **Opportunities.** One asset posted as collateral in one market: the yield left after interest, and the largest loan that still sits short of the point where the collateral is sold.
-- **Markets.** The lending markets themselves: which asset is collateral, which asset is borrowed, the level at which the collateral is sold, and the rate history.
+A refused read is often still HTTP 200. The body is then an object whose only key is `error`, with a string `code` and `message`. Anything else, including a resource that mentions the word error, is a successful read. `apiErrorMessage` is that test.
 
-NODO publishes the list at `https://app.nodo.xyz/api/v2`. Preparing a real loan stays on that API. This project does not do that.
+## Read it in this order
 
-## What this project is
+| File | What is there |
+| --- | --- |
+| [src/sign.ts](src/sign.ts) | The six-line string and the Ed25519 signature |
+| [src/http.ts](src/http.ts) | GET only, the signed path, HTTP 200 failures |
+| [src/present.ts](src/present.ts) | The compact object a caller receives. Purchase, redemption, and acquisition routes are dropped here |
+| [src/server.ts](src/server.ts) | Six tools and two prompts. Lists default to 10 rows |
+| [src/credentials.ts](src/credentials.ts) | Key and secret shape. The secret is replaced with `[redacted]` if it ever appears in a result |
+| [src/index.ts](src/index.ts) | stdio. Load the login, then serve |
 
-`nodo-mcp` reads the list and returns a short answer: which asset, what it pays, what the loan costs, and what the market has paid recently.
-
-It cannot borrow, buy, sell, or return the instructions for buying or redeeming an asset. The person or project that decides to commit money still uses NODO's API for that.
-
-A login issued by NODO is required. The login can be limited to reading. This program does not raise that limit.
+`npm test` compiles and runs the tests beside those files. They check the signed path, that a signature over `/assets?...` fails, that an HTTP 200 error envelope is a failure, and that the secret is absent from both results and errors.
 
 ## Questions it can answer
 
