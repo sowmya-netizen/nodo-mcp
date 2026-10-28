@@ -173,6 +173,8 @@ function projectOpportunity(row: Json): Json {
   const projected = record(projection?.value);
   const netApy = record(record(projected?.netApy)?.selected);
   const leverage = record(projected?.leverage);
+  const resolved = record(projected?.resolved);
+  const capacity = record(projected?.capacity) ?? record(projection?.capacity);
   const collateral = record(market?.collateralToken);
   const debt = record(market?.debtToken);
   return {
@@ -199,6 +201,12 @@ function projectOpportunity(row: Json): Json {
     rateKind: rate?.kind ?? null,
     baseYieldApy: compactYield(row.baseYieldApy),
     projectionStatus: projection?.status ?? null,
+    projectionReason: typeof projection?.reason === "string" ? projection.reason : null,
+    appliedLtvBps: resolved?.targetLtvBps ?? null,
+    appliedRounds: resolved?.rounds ?? null,
+    deployable: capacity?.deployableToTarget ?? capacity?.deployableToMaximum ?? null,
+    deployableUsd: capacity?.deployableToTargetUsd ?? null,
+    bindingConstraint: capacity?.bindingConstraint ?? null,
     netApy: netApy?.current ?? null,
     leverage: leverage?.selected ?? null,
   };

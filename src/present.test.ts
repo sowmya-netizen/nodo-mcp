@@ -38,8 +38,14 @@ test("list_opportunities keeps the id and the next page, and drops route payload
           projection: {
             status: "available",
             value: {
+              resolved: { targetLtvBps: "7500", rounds: 2 },
               netApy: { selected: { current: "0.21" } },
               leverage: { selected: "3.8" },
+              capacity: {
+                deployableToTarget: "250000",
+                deployableToTargetUsd: "250000",
+                bindingConstraint: "available-liquidity",
+              },
             },
           },
           acquisitionRoutes: [{ calldata: "0xdead" }],
@@ -55,6 +61,23 @@ test("list_opportunities keeps the id and the next page, and drops route payload
   assert.match(text, /"availableLiquidity": "1000000"/);
   assert.match(text, /"borrowApy": "0.04"/);
   assert.match(text, /"debtToken": "1:0x2222222222222222222222222222222222222222"/);
+  assert.match(text, /"appliedLtvBps": "7500"/);
+  assert.match(text, /"deployable": "250000"/);
+  assert.match(text, /"bindingConstraint": "available-liquidity"/);
+});
+
+test("an unavailable projection keeps the reason and drops routes", () => {
+  const text = presentRead("get_opportunity", {
+    data: {
+      id: "opportunity-v2:ethereum:demo",
+      projection: { status: "unavailable", reason: "missing-yield" },
+      acquisitionRoutes: [{ calldata: "0xdead" }],
+    },
+  });
+  assert.match(text, /"projectionStatus": "unavailable"/);
+  assert.match(text, /"projectionReason": "missing-yield"/);
+  assert.match(text, /"deployable": null/);
+  assert.doesNotMatch(text, /0xdead/);
   assert.doesNotMatch(text, /acquisitionRoutes/);
   assert.doesNotMatch(text, /0xdead/);
 });

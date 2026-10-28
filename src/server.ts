@@ -69,7 +69,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_opportunities",
     {
       title: "List opportunities",
-      description: `List leveraged yield opportunities. Each row includes the close-out LTV, how much can still be borrowed, and the yield left after interest. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
+      description: `List leveraged yield opportunities. Each row includes the close-out LTV, how much can still be borrowed, how much of the projection can be entered, and the yield left after interest. When projectionStatus is not available, projectionReason says why. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
       inputSchema: listOpportunitiesInput,
       annotations: READ_ONLY,
     },
