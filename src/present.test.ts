@@ -21,7 +21,10 @@ test("list_opportunities keeps the id and the next page, and drops route payload
             nativeId: "0xabc",
             collateralToken: { symbol: "mAPOLLO" },
             debtToken: { symbol: "USDC" },
-            rate: { kind: "variable" },
+            rate: { kind: "variable", annualizedRate: "0.04" },
+            liquidationLtvBps: "8600",
+            marketMaximumLtvBps: "8600",
+            availableLiquidity: "1000000",
           },
           accessRequirement: "permissionless",
           safeMaximumLtvBps: "8170",
@@ -42,6 +45,9 @@ test("list_opportunities keeps the id and the next page, and drops route payload
   assert.match(text, /"nextOffset": 1/);
   assert.match(text, /"netApy": "0.21"/);
   assert.match(text, /"marketId": "0xabc"/);
+  assert.match(text, /"liquidationLtvBps": "8600"/);
+  assert.match(text, /"availableLiquidity": "1000000"/);
+  assert.match(text, /"borrowApy": "0.04"/);
   assert.doesNotMatch(text, /acquisitionRoutes/);
   assert.doesNotMatch(text, /0xdead/);
 });
@@ -141,6 +147,32 @@ test("market filters keep one venue from the full list", () => {
   assert.doesNotMatch(text, /aave-v3/);
   assert.match(text, /"matched": 1/);
   assert.match(text, /"total": 2/);
+  assert.match(text, /"nextOffset": null/);
+});
+
+test("market pages are local and keep the filters off the request", () => {
+  const markets = Array.from({ length: 12 }, (_, index) =>
+    marketRow("morpho-blue", `C${index}`, "USDC")
+  );
+  const first = presentRead(
+    "list_markets",
+    { data: { markets } },
+    { marketPage: { limit: 10, offset: 0 } }
+  );
+  assert.match(first, /"returned": 10/);
+  assert.match(first, /"matched": 12/);
+  assert.match(first, /"nextOffset": 10/);
+  assert.match(first, /"collateral": "C0"/);
+  assert.doesNotMatch(first, /"collateral": "C10"/);
+  const second = presentRead(
+    "list_markets",
+    { data: { markets } },
+    { marketPage: { limit: 10, offset: 10 }, marketFilter: { debt: "usdc" } }
+  );
+  assert.match(second, /"returned": 2/);
+  assert.match(second, /"offset": 10/);
+  assert.match(second, /"nextOffset": null/);
+  assert.match(second, /"collateral": "C10"/);
 });
 
 function marketRow(protocolId: string, collateral: string, debt: string) {

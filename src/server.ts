@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NodoConfig } from "./credentials.js";
 import { redactSecret } from "./credentials.js";
 import { nodoGet, type QueryEntry } from "./http.js";
-import { presentRead, type MarketFilter, type ReadKind } from "./present.js";
+import { presentRead, type MarketFilter, type MarketPage, type ReadKind } from "./present.js";
 import {
   getAssetInput,
   getMarketApyHistoryInput,
@@ -69,7 +69,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_opportunities",
     {
       title: "List opportunities",
-      description: `List leveraged yield opportunities. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
+      description: `List leveraged yield opportunities. Each row includes the close-out LTV, how much can still be borrowed, and the yield left after interest. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
       inputSchema: listOpportunitiesInput,
       annotations: READ_ONLY,
     },
@@ -111,7 +111,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_markets",
     {
       title: "List markets",
-      description: `List lending markets that accept collateral. Optional network, protocolId, collateral, and debt filters run after the full list is read. Copy protocolId and marketId into get_market_apy_history. ${ONLY_READS}`,
+      description: `List lending markets that accept collateral. One read returns the full list; network, protocolId, collateral, debt, limit, and offset are applied here. Defaults to ${LIST_PAGE} rows. Pass nextOffset with the same filters for the next page. Copy protocolId and marketId into get_market_apy_history. ${ONLY_READS}`,
       inputSchema: listMarketsInput,
       annotations: READ_ONLY,
     },
@@ -123,6 +123,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
           collateral: args.collateral,
           debt: args.debt,
         },
+        marketPage: { limit: args.limit ?? LIST_PAGE, offset: args.offset ?? 0 },
       })
   );
 
@@ -217,7 +218,7 @@ async function read(
   segments: readonly string[],
   query: readonly QueryEntry[],
   kind: ReadKind,
-  options: Readonly<{ marketFilter?: MarketFilter }> = {}
+  options: Readonly<{ marketFilter?: MarketFilter; marketPage?: MarketPage }> = {}
 ) {
   try {
     const body = await nodoGet(config, segments, query);

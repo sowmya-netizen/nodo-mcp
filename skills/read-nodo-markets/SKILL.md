@@ -11,7 +11,7 @@ Use the `nodo` server. If it is not connected, stop and say so. Do not invent po
 
 ## Find a market
 
-1. Call `list_markets`. The API returns the full list. Narrow it with `protocolId`, `collateral`, `debt`, or `network` when the user named them. Those filters run after the read. They are not API query parameters.
+1. Call `list_markets`. The API returns the full list in one GET. This tool then keeps 10 rows. Narrow it with `protocolId`, `collateral`, `debt`, or `network` when the user named them. Those filters, and `limit` and `offset`, run after the read. They are not API query parameters. When `nextOffset` is set, call again with that offset and the same filters.
 2. `page.total` is the full book. `page.matched` is how many rows remain after filters.
 3. From the row, keep `protocolId` and `marketId` together. `marketId` is the venue's own id, not a NODO product id.
 

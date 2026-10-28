@@ -232,6 +232,24 @@ export const listMarketsInput = {
       "Keep markets whose debt symbol matches, case-insensitively, for example USDC. Omit for every debt token."
     )
     .optional(),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .describe(
+      "Maximum markets in this page after the local filter. When omitted, this server returns 10. The API itself is not paged. For the next page, pass nextOffset and repeat the same filters."
+    )
+    .optional(),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .max(100_000)
+    .describe(
+      "Number of markets to skip after the local filter. Omit to start at the first match. Repeat the same filters when continuing."
+    )
+    .optional(),
 };
 
 export const getMarketApyHistoryInput = {

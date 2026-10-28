@@ -168,6 +168,39 @@ test("a redirect is a failure and is not followed", async () => {
   assert.equal(fetches, 1);
 });
 
+test("list_markets pages locally and signs an empty query", async () => {
+  const { apiSecret } = throwawayCredential();
+  const calls: Captured[] = [];
+  const markets = [0, 1].map((index) => ({
+    network: "ethereum",
+    market: {
+      definition: {
+        id: { protocolId: "morpho-blue", nativeId: `m-${index}` },
+        collateralToken: { symbol: `C${index}` },
+        debtToken: { symbol: "USDC" },
+      },
+    },
+  }));
+  const result = await withClient(
+    config(apiSecret, async (input, init) => {
+      calls.push(capture(input, init));
+      return jsonResponse({ data: { markets } });
+    }),
+    (client) => client.callTool({ name: "list_markets", arguments: { limit: 1 } })
+  );
+  assert.equal(calls[0]?.url, "https://app.nodo.xyz/api/v2/markets");
+  const page = result.structuredContent as {
+    page: { returned: number; nextOffset: number };
+    markets: { marketId: string }[];
+  };
+  assert.equal(page.page.returned, 1);
+  assert.equal(page.page.nextOffset, 1);
+  assert.deepEqual(
+    page.markets.map((market) => market.marketId),
+    ["m-0"]
+  );
+});
+
 test("missing credentials fail before fetch", async () => {
   let fetches = 0;
   const previous = globalThis.fetch;

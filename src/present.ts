@@ -15,15 +15,20 @@ export type MarketFilter = Readonly<{
   debt?: string;
 }>;
 
+export type MarketPage = Readonly<{
+  limit?: number;
+  offset?: number;
+}>;
+
 /**
  * Compact object a caller receives.
  * Lists are one row per record. Purchase, redemption, and acquisition routes are omitted.
- * Market filters run here, after one signed GET of /api/v2/markets with an empty query.
+ * Market filters and pages run here, after one signed GET of /api/v2/markets with an empty query.
  */
 export function presentRead(
   kind: ReadKind,
   body: unknown,
-  options: Readonly<{ marketFilter?: MarketFilter }> = {}
+  options: Readonly<{ marketFilter?: MarketFilter; marketPage?: MarketPage }> = {}
 ): string {
   const data = envelope(body);
   switch (kind) {
@@ -39,7 +44,7 @@ export function presentRead(
         "opportunityId"
       );
     case "list_markets":
-      return presentMarkets(data, options.marketFilter);
+      return presentMarkets(data, options.marketFilter, options.marketPage);
     case "get_market_apy_history":
       return presentHistory(data, body);
     case "get_asset":
@@ -79,30 +84,37 @@ function presentList(
   });
 }
 
-function presentMarkets(data: Json | null, filter: MarketFilter | undefined): string {
+function presentMarkets(
+  data: Json | null,
+  filter: MarketFilter | undefined,
+  pageInput: MarketPage | undefined
+): string {
   const rows = data ? asArray(data.markets) : null;
   if (!data || !rows) return unrecognized("list_markets", data);
   const active = activeFilter(filter);
   const selected = active ? rows.filter((row) => marketMatches(row, active)) : rows;
-  const items = selected.map((row) => projectMarket(row));
-  const page = active
-    ? {
-        returned: items.length,
-        offset: 0,
-        limit: null,
-        matched: items.length,
-        total: rows.length,
-        nextOffset: null,
-      }
-    : pageFrom(data, items.length);
+  const limit = clampInt(pageInput?.limit, 10, 1, 100);
+  const offset = clampInt(pageInput?.offset, 0, 0, selected.length);
+  const items = selected.slice(offset, offset + limit).map((row) => projectMarket(row));
+  const nextOffset = offset + items.length < selected.length ? offset + items.length : null;
   return pretty({
     read: "list_markets",
     asOfTime: data.asOfTime ?? null,
-    page,
-    next: null,
+    page: {
+      returned: items.length,
+      offset,
+      limit,
+      matched: selected.length,
+      total: rows.length,
+      nextOffset,
+    },
+    next:
+      nextOffset === null
+        ? null
+        : `Call list_markets again with offset ${nextOffset} and the same filters.`,
     detail: active
-      ? "Filters run on the full market list after one read. They are not API query parameters. Copy protocolId and marketId into get_market_apy_history."
-      : "Copy protocolId and marketId into get_market_apy_history.",
+      ? "Filters and pages run on the full market list after one read. They are not API query parameters. Copy protocolId and marketId into get_market_apy_history."
+      : "Pages run on the full market list after one read. Copy protocolId and marketId into get_market_apy_history.",
     markets: items,
   });
 }
@@ -174,6 +186,11 @@ function projectOpportunity(row: Json): Json {
     marketId: market?.nativeId ?? null,
     collateral: collateral?.symbol ?? null,
     debt: debt?.symbol ?? null,
+    liquidationLtvBps: market?.liquidationLtvBps ?? null,
+    maxLtvBps: market?.marketMaximumLtvBps ?? null,
+    availableLiquidity: market?.availableLiquidity ?? null,
+    borrowApy: rate?.annualizedRate ?? null,
+    maturesAt: market?.maturesAt ?? null,
     accessRequirement: row.accessRequirement ?? null,
     safeMaximumLtvBps: row.safeMaximumLtvBps ?? null,
     maximumOpenRounds: row.maximumOpenRounds ?? null,
@@ -266,6 +283,16 @@ function activeFilter(filter: MarketFilter | undefined): MarketFilter | null {
   const debt = blankToUndefined(filter.debt);
   if (!network && !protocolId && !collateral && !debt) return null;
   return { network, protocolId, collateral, debt };
+}
+
+function clampInt(
+  value: number | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  if (value === undefined || !Number.isInteger(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
 }
 
 function blankToUndefined(value: string | undefined): string | undefined {
