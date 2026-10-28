@@ -25,6 +25,7 @@ test("list_opportunities keeps the id and the next page, and drops route payload
             },
             debtToken: {
               symbol: "USDC",
+              decimals: 6,
               id: { chainId: 1, address: "0x2222222222222222222222222222222222222222" },
             },
             rate: { kind: "variable", annualizedRate: "0.04" },
@@ -42,7 +43,9 @@ test("list_opportunities keeps the id and the next page, and drops route payload
               netApy: { selected: { current: "0.21" } },
               leverage: { selected: "3.8" },
               capacity: {
-                deployableToTarget: "250000",
+                inputToken: { chainId: 1, address: "0x2222222222222222222222222222222222222222" },
+                deployableToTarget: "250000000000",
+                deployableToMaximum: "900000000000",
                 deployableToTargetUsd: "250000",
                 bindingConstraint: "available-liquidity",
               },
@@ -58,12 +61,13 @@ test("list_opportunities keeps the id and the next page, and drops route payload
   assert.match(text, /"netApy": "0.21"/);
   assert.match(text, /"marketId": "0xabc"/);
   assert.match(text, /"liquidationLtvBps": "8600"/);
-  assert.match(text, /"availableLiquidity": "1000000"/);
+  assert.match(text, /"amount": "1"/);
   assert.match(text, /"borrowApy": "0.04"/);
   assert.match(text, /"debtToken": "1:0x2222222222222222222222222222222222222222"/);
   assert.match(text, /"appliedLtvBps": "7500"/);
-  assert.match(text, /"deployable": "250000"/);
-  assert.match(text, /"bindingConstraint": "available-liquidity"/);
+  assert.match(text, /"amount": "250000"/);
+  assert.match(text, /"amount": "900000"/);
+  assert.match(text, /"boundBy": "available-liquidity"/);
 });
 
 test("an unavailable projection keeps the reason and drops routes", () => {
@@ -76,7 +80,7 @@ test("an unavailable projection keeps the reason and drops routes", () => {
   });
   assert.match(text, /"projectionStatus": "unavailable"/);
   assert.match(text, /"projectionReason": "missing-yield"/);
-  assert.match(text, /"deployable": null/);
+  assert.match(text, /"capacity": null/);
   assert.doesNotMatch(text, /0xdead/);
   assert.doesNotMatch(text, /acquisitionRoutes/);
   assert.doesNotMatch(text, /0xdead/);

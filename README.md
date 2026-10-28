@@ -44,6 +44,22 @@ A refused read is often still HTTP 200. The body is then an object whose only ke
 
 `npm test` compiles and runs the tests beside those files. They check the signed path, that a signature over `/assets?...` fails, that an HTTP 200 error envelope is a failure, and that the secret is absent from both results and errors.
 
+## How it is evaluated
+
+A model answers from what a tool returns, so the evaluation scores that output, not the code. [src/production.test.ts](src/production.test.ts) runs a recorded production list and detail read through the real server. The recording is [fixtures/opportunities.production.json](fixtures/opportunities.production.json), unchanged from the product's public OpenAPI document, with its capture time and source hash. It checks five things a model needs:
+
+| Property | Failure it rules out |
+| --- | --- |
+| Units | Reading `26097074865` USDC base units as 26 billion. Amounts are whole tokens with the token named |
+| Capacity | Reporting a closed opportunity because room before target utilization is zero while the hard limit is not |
+| Chaining | An id from one tool that the next tool's input schema rejects |
+| Safety | Acquisition routes or mechanisms reaching the caller |
+| Agreement | A list row and its detail read disagreeing on the same position |
+
+It also replays the two-step path a model takes: `list_opportunities`, then `get_opportunity` with the id it returned. The second request must be the URL production recorded.
+
+APY and rate fields are decimals, so `0.05` is 5%. Fields ending in `Bps` are basis points, so `8600` is 86%.
+
 ## Questions it can answer
 
 | Question | Start here | Then |

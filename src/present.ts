@@ -192,7 +192,7 @@ function projectOpportunity(row: Json): Json {
     debtToken: tokenRef(debt),
     liquidationLtvBps: market?.liquidationLtvBps ?? null,
     maxLtvBps: market?.marketMaximumLtvBps ?? null,
-    availableLiquidity: market?.availableLiquidity ?? null,
+    availableLiquidity: tokenAmount(market?.availableLiquidity, debt),
     borrowApy: rate?.annualizedRate ?? null,
     maturesAt: market?.maturesAt ?? null,
     accessRequirement: row.accessRequirement ?? null,
@@ -204,9 +204,7 @@ function projectOpportunity(row: Json): Json {
     projectionReason: typeof projection?.reason === "string" ? projection.reason : null,
     appliedLtvBps: resolved?.targetLtvBps ?? null,
     appliedRounds: resolved?.rounds ?? null,
-    deployable: capacity?.deployableToTarget ?? capacity?.deployableToMaximum ?? null,
-    deployableUsd: capacity?.deployableToTargetUsd ?? null,
-    bindingConstraint: capacity?.bindingConstraint ?? null,
+    capacity: projectCapacity(capacity, collateral, debt),
     netApy: netApy?.current ?? null,
     leverage: leverage?.selected ?? null,
   };
@@ -245,9 +243,21 @@ function projectAssetDetail(row: Json): Json {
 }
 
 function projectOpportunityDetail(row: Json): Json {
+  const market = record(row.borrowMarket);
+  const debt = record(market?.debtToken);
+  const utilization = record(market?.utilization);
   return {
     read: "get_opportunity",
     ...projectOpportunity(row),
+    maximumBorrowable: tokenAmount(market?.maximumBorrowableDebt, debt),
+    utilization:
+      utilization?.status === "available"
+        ? {
+            targetUtilizationBps: utilization.targetUtilizationBps ?? null,
+            borrowApyAtTarget: utilization.borrowApyAtTargetUtilization ?? null,
+            borrowApyAtMaximum: utilization.borrowApyAtMaximumUtilization ?? null,
+          }
+        : null,
     assembledAt: row.assembledAt ?? null,
     omitted:
       "Acquisition routes are left out. This server cannot open, close, or estimate a position.",
@@ -326,6 +336,55 @@ function tokenRef(token: Json | null): string | null {
     return null;
   }
   return `${chainId}:${address}`;
+}
+
+/**
+ * The API reports amounts as integers in the token's smallest unit.
+ * 26097074865 with 6 decimals is 26097.074865 USDC, not 26 billion.
+ */
+function tokenAmount(raw: unknown, token: Json | null): Json | null {
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
+  const decimals = token?.decimals;
+  const symbol = typeof token?.symbol === "string" ? token.symbol : null;
+  if (typeof decimals !== "number" || !Number.isInteger(decimals) || decimals < 0) {
+    return { baseUnits: raw, token: symbol };
+  }
+  const digits = raw.replace(/^0+(?=\d)/, "").padStart(decimals + 1, "0");
+  const whole = digits.slice(0, digits.length - decimals);
+  const fraction = digits.slice(digits.length - decimals).replace(/0+$/, "");
+  return { amount: fraction ? `${whole}.${fraction}` : whole, token: symbol };
+}
+
+/**
+ * Deployable amounts are in the capacity input token (the debt token here).
+ * Target means the market's target utilization, where the borrow rate turns
+ * steep, not the applied LTV. Collateral headroom is in collateral units.
+ */
+function projectCapacity(
+  capacity: Json | null,
+  collateral: Json | null,
+  debt: Json | null
+): Json | null {
+  if (!capacity) return null;
+  const input = record(capacity.inputToken);
+  const inputToken =
+    input && sameAddress(input, record(collateral?.id)) ? collateral : debt;
+  const headroom = record(capacity.collateralSupplyRemaining);
+  return {
+    beforeTargetUtilization: tokenAmount(capacity.deployableToTarget, inputToken),
+    beforeTargetUtilizationUsd: capacity.deployableToTargetUsd ?? null,
+    toMaximum: tokenAmount(capacity.deployableToMaximum, inputToken),
+    boundBy: capacity.bindingConstraint ?? null,
+    collateralSupplyRemaining: headroom ? tokenAmount(headroom.amount, collateral) : null,
+  };
+}
+
+function sameAddress(left: Json, right: Json | null): boolean {
+  return (
+    typeof left.address === "string" &&
+    typeof right?.address === "string" &&
+    left.address.toLowerCase() === right.address.toLowerCase()
+  );
 }
 
 function compactYield(value: unknown): unknown {

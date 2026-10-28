@@ -29,7 +29,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     { name: "nodo", version: "0.4.0" },
     {
       instructions:
-        "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions. List tools return one compact row per record and a next offset when another page exists. Copy assetId into get_asset and opportunityId into get_opportunity. Copy protocolId and marketId into get_market_apy_history. A failed read is a tool error, including when the API returns HTTP 200 with an error code.",
+        "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions. List tools return one compact row per record and a next offset when another page exists. Copy assetId into get_asset and opportunityId into get_opportunity. Copy protocolId and marketId into get_market_apy_history. A failed read is a tool error, including when the API returns HTTP 200 with an error code. Units: APY and rate fields are decimals, so 0.05 is 5%. Fields ending in Bps are basis points, so 8600 is 86%. Token amounts are whole tokens with the token named.",
     }
   );
 
@@ -69,7 +69,7 @@ export function createNodoServer(config: NodoConfig): McpServer {
     "list_opportunities",
     {
       title: "List opportunities",
-      description: `List leveraged yield opportunities. Each row includes the close-out LTV, how much can still be borrowed, how much of the projection can be entered, and the yield left after interest. When projectionStatus is not available, projectionReason says why. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
+      description: `List leveraged yield opportunities. Each row includes the close-out LTV, how much can still be borrowed, and the yield left after interest. capacity.beforeTargetUtilization is what can be entered before the borrow rate turns steep; capacity.toMaximum is the hard limit. When projectionStatus is not available, projectionReason says why. Defaults to ${LIST_PAGE} rows when limit is omitted. Copy opportunityId into get_opportunity. ${ONLY_READS}`,
       inputSchema: listOpportunitiesInput,
       annotations: READ_ONLY,
     },

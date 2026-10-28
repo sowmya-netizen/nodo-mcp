@@ -1,0 +1,458 @@
+{
+  "schemaSource": {
+    "sourceUrl": "https://nodo-rwa.grid3.xyz/api/v2/openapi.json",
+    "sha256": "a88570703563015db3ff6e9167da012a64961fc1d40833de51b3db9674251548"
+  },
+  "adaptation": "NOD-163: counts.excluded=0 is an illustrative schema adaptation, not a measured exclusion count from the historical capture. List query representation: access -> accessRequirement; rateType -> borrowRateKind; leverageBasis removed. Asset issuer removed and platform projected from the captured Token platform metadata. Product identities, amounts and counts are captured production values; derived rate and publication-time changes are described below. The detail maximumBorrowableDebt is adapted from the captured Morpho availableLiquidity because this recorded Market has no other hard borrow constraint; collateralSupply is null because no collateral supply cap was published. These are recorded examples, not live quotes. Asset representation is projected to display, platform, tokens, terms and Asset-level economics; undisclosed optional facts are omitted and accepted terms defaults are applied. Capture counts remain historical, not a recomputation of current publication rules. Independent economics.apy30d is unavailable with coverage-unknown because the captured published 30D rate has no verifiable coverage or NAV boundaries. NOD-133: market quotes and derived net carry are locally converted to 30D simple annualization. The comparison is recomputed from the recorded Morpho trailing-30-day fixture ending 2026-09-06; interval coverage is calculated from that evidence. These derived rates replace the original captured arithmetic averages. Example asOfTime and assembledAt use that calculation endpoint, not the original cached snapshot publication time. NOD-290: bindingConstraint is available-liquidity and collateralSupplyRemaining is null for this recorded Market, on the same captured evidence: available liquidity is its only hard borrow constraint and no collateral supply cap was published.",
+  "list": {
+    "sourceUrl": "https://nodo-rwa.grid3.xyz/web/v1/product-v2/opportunities?search=mAPOLLO&limit=1",
+    "capturedAt": "2026-09-06T00:18:27.464Z",
+    "sourceResponseSha256": "cf14c71da9659df5344ba648ce377c733960d698fb9a55e8da0a39ae52265e32",
+    "value": {
+      "data": {
+        "asOfTime": "2026-09-06T00:00:00.000Z",
+        "coverage": "loop-candidate-opportunities",
+        "query": {
+          "targetLtvBps": null,
+          "rounds": null,
+          "network": null,
+          "search": "mAPOLLO",
+          "protocolIds": [],
+          "debtToken": null,
+          "category": [],
+          "yieldToken": [],
+          "minimumNetApy": null,
+          "maximumNetApy": null,
+          "sortBy": "net-apy",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 0,
+          "accessRequirement": [],
+          "borrowRateKind": []
+        },
+        "counts": {
+          "excluded": 0,
+          "total": 88,
+          "matched": 3,
+          "returned": 1
+        },
+        "opportunities": [
+          {
+            "id": "opportunity-v2:1:11:morpho-blue66:0x031c7333014af51e4fd18031d14e4eaada58348cde3f6dc6ea8cca16f7387fb20x7cf9dec92ca9fd46f8d86e7798b72624bc116c05",
+            "asset": {
+              "id": "35673",
+              "display": {
+                "name": "Midas mAPOLLO",
+                "ticker": "mAPOLLO",
+                "logo": "https://rwa-partners-infra-prod-rwapartnersuploads740d2985-1c2klgo7i3ef.s3.us-east-1.amazonaws.com/uploads/images/ba7f2355ed8995c16c57f321556268f6644c09347e946a7526c908a87cf7c764.png"
+              },
+              "platform": {
+                "id": "256",
+                "name": "Midas",
+                "website": "https://midas.app/"
+              },
+              "tokens": [
+                {
+                  "id": {
+                    "chainId": 1,
+                    "address": "0x7cf9dec92ca9fd46f8d86e7798b72624bc116c05"
+                  },
+                  "name": "Ethereum mAPOLLO",
+                  "symbol": "mAPOLLO",
+                  "decimals": 18,
+                  "acquisition": {
+                    "kind": "lifi-quote-required",
+                    "inputTokens": [
+                      {
+                        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+                        "chainId": 1
+                      },
+                      {
+                        "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+                        "chainId": 1
+                      }
+                    ]
+                  }
+                }
+              ],
+              "terms": {
+                "access": "allowlist-required",
+                "isInvestable": true,
+                "eligibleInvestorTypes": ["Non-U.S. Investor"],
+                "openEnded": true,
+                "lockupPeriodMonths": 0,
+                "holderRightToRedeem": true
+              },
+              "economics": {
+                "navUsd": "1.11583894",
+                "priceUsd": "1.11583894",
+                "apy": {
+                  "value": "0.081283243794073",
+                  "windowDays": 30,
+                  "method": "published",
+                  "basis": "30d-simple-annualised"
+                },
+                "updatedAt": "2026-09-05T04:07:26.392Z",
+                "freshness": "fresh",
+                "apy30d": {
+                  "status": "unavailable",
+                  "reason": "coverage-unknown"
+                }
+              }
+            },
+            "borrowMarket": {
+              "network": "ethereum",
+              "protocolId": "morpho-blue",
+              "nativeId": "0x031c7333014af51e4fd18031d14e4eaada58348cde3f6dc6ea8cca16f7387fb2",
+              "collateralToken": {
+                "id": {
+                  "chainId": 1,
+                  "address": "0x7cf9dec92ca9fd46f8d86e7798b72624bc116c05"
+                },
+                "name": "Midas Apollo Crypto",
+                "symbol": "mAPOLLO",
+                "decimals": 18
+              },
+              "debtToken": {
+                "id": {
+                  "chainId": 1,
+                  "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+                },
+                "name": "USDCoin",
+                "symbol": "USDC",
+                "decimals": 6
+              },
+              "marketMaximumLtvBps": "8600",
+              "liquidationLtvBps": "8600",
+              "rate": {
+                "kind": "variable",
+                "annualizedRate": "0.037761576834349295",
+                "basis": "30d-simple-annualised"
+              },
+              "availableLiquidity": "26097074865",
+              "risk": "clear",
+              "observedAt": "2026-09-06T00:17:45.502Z"
+            },
+            "baseYieldApy": {
+              "status": "available",
+              "windowDays": 30,
+              "value": "0.081283243794073",
+              "method": "published",
+              "basis": "30d-simple-annualised"
+            },
+            "borrowRateComparison": {
+              "basis": "30d-simple-annualised",
+              "windowDays": 30,
+              "annualizedRate": "0.033676916438455492",
+              "sampleCount": 721,
+              "windowStart": "2026-08-07T00:00:00.000Z",
+              "windowEnd": "2026-09-06T00:00:00.000Z",
+              "firstObservedAt": "2026-08-07T00:00:00.000Z",
+              "lastObservedAt": "2026-09-06T00:00:00.000Z",
+              "method": "trailing-30d-average",
+              "coverageRatio": 1
+            },
+            "accessRequirement": "allowlist-required",
+            "acquisitionRoutes": [
+              {
+                "id": "route.ethereum.swap.direct.v1",
+                "revision": "1",
+                "mechanism": {
+                  "id": "mechanism.ethereum.swap.v1",
+                  "revision": "1"
+                }
+              }
+            ],
+            "safeMaximumLtvBps": "8170",
+            "maximumOpenRounds": 5,
+            "projection": {
+              "status": "available",
+              "value": {
+                "resolved": {
+                  "targetLtvBps": "8170",
+                  "rounds": 5,
+                  "leverageBasis": "achievable"
+                },
+                "leverage": {
+                  "asymptotic": "5.46448087431693989",
+                  "achievable": "3.839376536824857",
+                  "selected": "3.839376536824857"
+                },
+                "netApy": {
+                  "asymptotic": {
+                    "kind": "point-only",
+                    "current": "0.293820781769698705",
+                    "basis": "30d-simple-annualised"
+                  },
+                  "achievable": {
+                    "kind": "point-only",
+                    "current": "0.216455532692016692",
+                    "basis": "30d-simple-annualised"
+                  },
+                  "selected": {
+                    "kind": "point-only",
+                    "current": "0.216455532692016692",
+                    "basis": "30d-simple-annualised"
+                  }
+                },
+                "capacity": {
+                  "kind": "target-and-maximum",
+                  "inputToken": {
+                    "chainId": 1,
+                    "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+                  },
+                  "availableLiquidity": "26097074865",
+                  "deployableToTarget": "0",
+                  "deployableToMaximum": "9191128589",
+                  "deployableToTargetUsd": "0",
+                  "bindingConstraint": "available-liquidity",
+                  "collateralSupplyRemaining": null
+                },
+                "maximum": {
+                  "targetLtvBps": "8170",
+                  "rounds": 5,
+                  "leverage": "3.839376536824857",
+                  "netApy": {
+                    "kind": "point-only",
+                    "current": "0.216455532692016692",
+                    "basis": "30d-simple-annualised"
+                  },
+                  "capacity": {
+                    "kind": "target-and-maximum",
+                    "inputToken": {
+                      "chainId": 1,
+                      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+                    },
+                    "availableLiquidity": "26097074865",
+                    "deployableToTarget": "0",
+                    "deployableToMaximum": "9191128589",
+                    "deployableToTargetUsd": "0",
+                    "bindingConstraint": "available-liquidity",
+                    "collateralSupplyRemaining": null
+                  }
+                }
+              }
+            },
+            "assembledAt": "2026-09-06T00:00:00.000Z"
+          }
+        ]
+      }
+    }
+  },
+  "detail": {
+    "sourceUrl": "https://nodo-rwa.grid3.xyz/web/v1/product-v2/opportunities/opportunity-v2%3A1%3A11%3Amorpho-blue66%3A0x031c7333014af51e4fd18031d14e4eaada58348cde3f6dc6ea8cca16f7387fb20x7cf9dec92ca9fd46f8d86e7798b72624bc116c05",
+    "capturedAt": "2026-09-06T00:18:27.675Z",
+    "sourceResponseSha256": "6f51e28bcfb2215d17fab9e3549fb40334fdfef6475643a261c0c35fe055c2b6",
+    "value": {
+      "data": {
+        "id": "opportunity-v2:1:11:morpho-blue66:0x031c7333014af51e4fd18031d14e4eaada58348cde3f6dc6ea8cca16f7387fb20x7cf9dec92ca9fd46f8d86e7798b72624bc116c05",
+        "asset": {
+          "id": "35673",
+          "display": {
+            "name": "Midas mAPOLLO",
+            "ticker": "mAPOLLO",
+            "logo": "https://rwa-partners-infra-prod-rwapartnersuploads740d2985-1c2klgo7i3ef.s3.us-east-1.amazonaws.com/uploads/images/ba7f2355ed8995c16c57f321556268f6644c09347e946a7526c908a87cf7c764.png"
+          },
+          "platform": {
+            "id": "256",
+            "name": "Midas",
+            "website": "https://midas.app/"
+          },
+          "tokens": [
+            {
+              "id": {
+                "chainId": 1,
+                "address": "0x7cf9dec92ca9fd46f8d86e7798b72624bc116c05"
+              },
+              "name": "Ethereum mAPOLLO",
+              "symbol": "mAPOLLO",
+              "decimals": 18,
+              "acquisition": {
+                "kind": "lifi-quote-required",
+                "inputTokens": [
+                  {
+                    "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+                    "chainId": 1
+                  },
+                  {
+                    "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+                    "chainId": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "terms": {
+            "access": "allowlist-required",
+            "isInvestable": true,
+            "eligibleInvestorTypes": ["Non-U.S. Investor"],
+            "openEnded": true,
+            "lockupPeriodMonths": 0,
+            "holderRightToRedeem": true
+          },
+          "economics": {
+            "navUsd": "1.11583894",
+            "priceUsd": "1.11583894",
+            "apy": {
+              "value": "0.081283243794073",
+              "windowDays": 30,
+              "method": "published",
+              "basis": "30d-simple-annualised"
+            },
+            "updatedAt": "2026-09-05T04:07:26.392Z",
+            "freshness": "fresh",
+            "apy30d": {
+              "status": "unavailable",
+              "reason": "coverage-unknown"
+            }
+          }
+        },
+        "borrowMarket": {
+          "network": "ethereum",
+          "protocolId": "morpho-blue",
+          "nativeId": "0x031c7333014af51e4fd18031d14e4eaada58348cde3f6dc6ea8cca16f7387fb2",
+          "collateralToken": {
+            "id": {
+              "chainId": 1,
+              "address": "0x7cf9dec92ca9fd46f8d86e7798b72624bc116c05"
+            },
+            "name": "Midas Apollo Crypto",
+            "symbol": "mAPOLLO",
+            "decimals": 18
+          },
+          "debtToken": {
+            "id": {
+              "chainId": 1,
+              "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            },
+            "name": "USDCoin",
+            "symbol": "USDC",
+            "decimals": 6
+          },
+          "marketMaximumLtvBps": "8600",
+          "liquidationLtvBps": "8600",
+          "rate": {
+            "kind": "variable",
+            "annualizedRate": "0.037761576834349295",
+            "basis": "30d-simple-annualised"
+          },
+          "availableLiquidity": "26097074865",
+          "maximumBorrowableDebt": "26097074865",
+          "collateralSupply": null,
+          "risk": "clear",
+          "observedAt": "2026-09-06T00:17:45.502Z",
+          "utilization": {
+            "status": "available",
+            "targetUtilizationBps": "9000",
+            "borrowRoomToTargetUtilization": "0",
+            "borrowRoomToMaximumUtilization": "26097074865",
+            "borrowApyAtTargetUtilization": "0.033535615087221302",
+            "borrowApyAtMaximumUtilization": "0.134698095715293085",
+            "basis": "30d-simple-annualised"
+          }
+        },
+        "baseYieldApy": {
+          "status": "available",
+          "windowDays": 30,
+          "value": "0.081283243794073",
+          "method": "published",
+          "basis": "30d-simple-annualised"
+        },
+        "borrowRateComparison": {
+          "basis": "30d-simple-annualised",
+          "windowDays": 30,
+          "annualizedRate": "0.033676916438455492",
+          "sampleCount": 721,
+          "windowStart": "2026-08-07T00:00:00.000Z",
+          "windowEnd": "2026-09-06T00:00:00.000Z",
+          "firstObservedAt": "2026-08-07T00:00:00.000Z",
+          "lastObservedAt": "2026-09-06T00:00:00.000Z",
+          "method": "trailing-30d-average",
+          "coverageRatio": 1
+        },
+        "accessRequirement": "allowlist-required",
+        "acquisitionRoutes": [
+          {
+            "id": "route.ethereum.swap.direct.v1",
+            "revision": "1",
+            "mechanism": {
+              "id": "mechanism.ethereum.swap.v1",
+              "revision": "1"
+            }
+          }
+        ],
+        "safeMaximumLtvBps": "8170",
+        "maximumOpenRounds": 5,
+        "projection": {
+          "status": "available",
+          "value": {
+            "resolved": {
+              "targetLtvBps": "8170",
+              "rounds": 5,
+              "leverageBasis": "achievable"
+            },
+            "leverage": {
+              "asymptotic": "5.46448087431693989",
+              "achievable": "3.839376536824857",
+              "selected": "3.839376536824857"
+            },
+            "netApy": {
+              "asymptotic": {
+                "kind": "point-only",
+                "current": "0.293820781769698705",
+                "basis": "30d-simple-annualised"
+              },
+              "achievable": {
+                "kind": "point-only",
+                "current": "0.216455532692016692",
+                "basis": "30d-simple-annualised"
+              },
+              "selected": {
+                "kind": "point-only",
+                "current": "0.216455532692016692",
+                "basis": "30d-simple-annualised"
+              }
+            },
+            "capacity": {
+              "kind": "target-and-maximum",
+              "inputToken": {
+                "chainId": 1,
+                "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+              },
+              "availableLiquidity": "26097074865",
+              "deployableToTarget": "0",
+              "deployableToMaximum": "9191128589",
+              "deployableToTargetUsd": "0",
+              "bindingConstraint": "available-liquidity",
+              "collateralSupplyRemaining": null
+            },
+            "maximum": {
+              "targetLtvBps": "8170",
+              "rounds": 5,
+              "leverage": "3.839376536824857",
+              "netApy": {
+                "kind": "point-only",
+                "current": "0.216455532692016692",
+                "basis": "30d-simple-annualised"
+              },
+              "capacity": {
+                "kind": "target-and-maximum",
+                "inputToken": {
+                  "chainId": 1,
+                  "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+                },
+                "availableLiquidity": "26097074865",
+                "deployableToTarget": "0",
+                "deployableToMaximum": "9191128589",
+                "deployableToTargetUsd": "0",
+                "bindingConstraint": "available-liquidity",
+                "collateralSupplyRemaining": null
+              }
+            }
+          }
+        },
+        "assembledAt": "2026-09-06T00:00:00.000Z"
+      }
+    }
+  }
+}
