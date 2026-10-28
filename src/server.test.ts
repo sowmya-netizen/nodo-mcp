@@ -25,6 +25,15 @@ const TOOL_NAMES = [
   "get_market_apy_history",
 ];
 
+test("prompts name the two read workflows", async () => {
+  const { apiSecret } = throwawayCredential();
+  const names = await withClient(config(apiSecret), async (client) => {
+    const listed = await client.listPrompts();
+    return listed.prompts.map((prompt) => prompt.name);
+  });
+  assert.deepEqual(names, ["find-yield", "read-market"]);
+});
+
 test("tools/list names are exactly the six read tools", async () => {
   const { apiSecret } = throwawayCredential();
   const seen = await withClient(config(apiSecret), async (client) => {

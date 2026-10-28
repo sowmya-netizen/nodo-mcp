@@ -26,7 +26,7 @@ const ONLY_READS =
 
 export function createNodoServer(config: NodoConfig): McpServer {
   const server = new McpServer(
-    { name: "nodo", version: "0.3.0" },
+    { name: "nodo", version: "0.4.0" },
     {
       instructions:
         "This server only reads NODO assets, opportunities, and markets. It cannot open, close, or estimate positions. List tools return one compact row per record and a next offset when another page exists. Copy assetId into get_asset and opportunityId into get_opportunity. Copy protocolId and marketId into get_market_apy_history. A failed read is a tool error, including when the API returns HTTP 200 with an error code.",
@@ -145,6 +145,56 @@ export function createNodoServer(config: NodoConfig): McpServer {
         ["cursor", args.cursor],
       ],
       "get_market_apy_history")
+  );
+
+  server.registerPrompt(
+    "find-yield",
+    {
+      title: "Find a yield-bearing asset or a loan against it",
+      description:
+        "Read what an asset pays, and the yield left after interest. This prompt only reads.",
+    },
+    () => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: [
+              "Use the nodo tools to read the live list. Do not invent rows, ids, yields, or rates.",
+              "Call list_assets or list_opportunities first. Copy assetId into get_asset and opportunityId into get_opportunity.",
+              "Report name, ticker, issuer, yield, size, collateral, borrowed asset, yield left after interest, and asOfTime when it is present.",
+              "Do not size, open, or prepare a loan. Purchase, redemption, and acquisition steps are not in these results.",
+            ].join(" "),
+          },
+        },
+      ],
+    })
+  );
+
+  server.registerPrompt(
+    "read-market",
+    {
+      title: "Read a lending market and its rate history",
+      description:
+        "Read which market accepts an asset as collateral, when a loan would be closed out, and the rate history. This prompt only reads.",
+    },
+    () => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: [
+              "Use the nodo tools to read lending markets. Do not invent pools or rates.",
+              "Call list_markets. Keep protocolId and marketId together, then call get_market_apy_history with that pair.",
+              "If nextCursor is set, call again with that cursor and the same protocol, market, asset, window, and resolution.",
+              "Report the level where the collateral is sold, the borrow rate, and the window. Do not turn the market into a loan.",
+            ].join(" "),
+          },
+        },
+      ],
+    })
   );
 
   return server;

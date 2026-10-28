@@ -125,6 +125,8 @@ Cursor、Copilot のコーディングエージェント、Cline も [AGENTS.md]
 
 [llms.txt](llms.txt) はこのリポジトリの短い地図で、英語が既定である。[中文](llms.zh.txt) · [日本語](llms.ja.txt)
 
+プロンプトを出せるクライアントは `find-yield` または `read-market` を実行できる。どちらのプロンプトも、一覧の読み方だけを示す。
+
 ## 要求が失敗したとき
 
 拒否された読み取りでも、HTTP 200 と本文 `{ "error": { "code", "message" } }` で返ることが多い。このプログラムはそれを失敗として扱う。例は `NODO API auth_invalid: API key is invalid or revoked` である。それ以外の HTTP エラーも失敗である。
@@ -133,4 +135,4 @@ Cursor、Copilot のコーディングエージェント、Cline も [AGENTS.md]
 
 ## 掲載
 
-`server.json` では、このプログラムの名前は `io.github.sowmya-netizen/nodo` である。公開 MCP レジストリにはまだ載っていない。載せるにはパッケージを公開し、GitHub に `sowmya-netizen` として入る必要がある。
+`server.json` では、このプログラムの名前は `io.github.sowmya-netizen/nodo` で、npm パッケージ `nodo-mcp` を指す。公開レジストリは、公開されたパッケージの `mcpName` が一致するかを確認する。このパッケージはまだ npm にないので、レジストリの項目は有効ではない。残る手順は、そのパッケージを公開し、`sowmya-netizen` としてレジストリに入ることである。

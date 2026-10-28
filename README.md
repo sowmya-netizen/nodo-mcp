@@ -123,6 +123,8 @@ The two guides are picked up from `skills/` by Cursor (`.cursor/skills`), Claude
 
 [llms.txt](llms.txt) is a short map of this repository. [中文](llms.zh.txt) · [日本語](llms.ja.txt)
 
+Clients that offer prompts can run `find-yield` or `read-market`. Each prompt only says how to read the list.
+
 ## When a request fails
 
 A refused read often still comes back as HTTP 200, with a body of `{ "error": { "code", "message" } }`. This program reports that as a failure, for example `NODO API auth_invalid: API key is invalid or revoked`. Any other HTTP error is a failure too.
@@ -131,4 +133,4 @@ Each read is signed on this machine. The secret is not sent. If a response happe
 
 ## Listing
 
-`server.json` names this program `io.github.sowmya-netizen/nodo`. It is not on the public MCP registry yet. That requires publishing a package and signing in to GitHub as `sowmya-netizen`.
+`server.json` names this program `io.github.sowmya-netizen/nodo` and points at the npm package `nodo-mcp`. The public registry checks that the published package's `mcpName` matches. This package is not on npm yet, so the registry entry is not live. Publishing it, then signing the registry in as `sowmya-netizen`, is the remaining step.

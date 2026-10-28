@@ -1,7 +1,20 @@
 {
   "name": "nodo-mcp",
-  "version": "0.3.0",
-  "description": "Read-only MCP server for NODO assets, opportunities, and markets.",
+  "version": "0.4.0",
+  "description": "Read-only MCP server for NODO yield-bearing assets, loans against them, and lending market rates.",
+  "license": "MIT",
+  "mcpName": "io.github.sowmya-netizen/nodo",
+  "homepage": "https://github.com/sowmya-netizen/nodo-mcp",
+  "bugs": {
+    "url": "https://github.com/sowmya-netizen/nodo-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "nodo",
+    "yield",
+    "lending"
+  ],
   "type": "module",
   "bin": {
     "nodo-mcp": "dist/index.js"
@@ -9,6 +22,7 @@
   "files": [
     "dist",
     "README.md",
+    "LICENSE",
     "server.json"
   ],
   "engines": {

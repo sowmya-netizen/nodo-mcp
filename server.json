@@ -1,10 +1,42 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sowmya-netizen/nodo",
-  "description": "Reads NODO assets, opportunities, and markets.",
-  "version": "0.3.0",
+  "title": "NODO",
+  "description": "Reads yield-bearing assets, loans against them, and lending market rates.",
+  "version": "0.4.0",
+  "websiteUrl": "https://app.nodo.xyz",
   "repository": {
     "url": "https://github.com/sowmya-netizen/nodo-mcp",
     "source": "github"
-  }
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "nodo-mcp",
+      "version": "0.4.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "NODO_API_KEY",
+          "description": "NODO read login. Looks like nodo_<uuid>.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "NODO_API_SECRET",
+          "description": "Signing secret shown once when the login is created.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "NODO_API_BASE_URL",
+          "description": "Host for the same /api/v2 list. Defaults to https://app.nodo.xyz/api/v2.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
 }

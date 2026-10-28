@@ -125,6 +125,8 @@ Cursor、Copilot 的编程代理，以及 Cline，也会读取 [AGENTS.md](AGENT
 
 [llms.txt](llms.txt) 是本仓库的简短目录，英文为默认。[中文](llms.zh.txt) · [日本語](llms.ja.txt)
 
+支持提示的客户端可以运行 `find-yield` 或 `read-market`。每条提示只说明如何读取名单。
+
 ## 请求失败时
 
 被拒绝的读取常常仍以 HTTP 200 返回，正文是 `{ "error": { "code", "message" } }`。本程序把这种情况报为失败，例如 `NODO API auth_invalid: API key is invalid or revoked`。其他 HTTP 错误同样是失败。
@@ -133,4 +135,4 @@ Cursor、Copilot 的编程代理，以及 Cline，也会读取 [AGENTS.md](AGENT
 
 ## 名录
 
-`server.json` 把本程序命名为 `io.github.sowmya-netizen/nodo`。它还没有出现在公开的 MCP 名录上。那需要发布一个包，并以 `sowmya-netizen` 登录 GitHub。
+`server.json` 把本程序命名为 `io.github.sowmya-netizen/nodo`，并指向 npm 包 `nodo-mcp`。公开名录会核对已发布包里的 `mcpName`。这个包还没有发布到 npm，所以名录条目还没有生效。剩下的步骤是发布该包，再以 `sowmya-netizen` 登录名录。
