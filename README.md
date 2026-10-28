@@ -58,6 +58,8 @@ A model answers from what a tool returns, so the evaluation scores that output, 
 
 It also replays the two-step path a model takes: `list_opportunities`, then `get_opportunity` with the id it returned. The second request must be the URL production recorded.
 
+A failed read ends with one line that says whether retrying helps and which call to make instead. An unknown `opportunityId` points back to `list_opportunities`. A refused key says retrying will not help. A server failure allows one retry and says not to fill in figures. The cases are in [src/server.test.ts](src/server.test.ts) and the mapping is `recovery` in [src/server.ts](src/server.ts).
+
 APY and rate fields are decimals, so `0.05` is 5%. Fields ending in `Bps` are basis points, so `8600` is 86%.
 
 ## Questions it can answer

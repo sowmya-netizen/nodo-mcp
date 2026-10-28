@@ -59,13 +59,14 @@ export async function nodoGet(
       },
     });
   } catch (error) {
-    throw publicError(config.apiSecret, networkFailure(error));
+    throw publicError(config.apiSecret, networkFailure(error), { status: null, code: null });
   }
   const body = redactSecret(await response.text(), config.apiSecret);
   if (response.status < 200 || response.status >= 300) {
     throw publicError(
       config.apiSecret,
-      `NODO request failed with HTTP ${response.status}: ${body}`
+      `NODO request failed with HTTP ${response.status}: ${body}`,
+      { status: response.status, code: null }
     );
   }
   if (body === "") return null;
@@ -77,9 +78,23 @@ export async function nodoGet(
   }
   const apiError = apiErrorMessage(parsed);
   if (apiError !== null) {
-    throw publicError(config.apiSecret, apiError);
+    const code = isRecord(parsed) && isRecord(parsed.error) ? String(parsed.error.code) : null;
+    throw publicError(config.apiSecret, apiError, { status: response.status, code });
   }
   return parsed;
+}
+
+/** A failed read. `code` is the product error code, when the API sent one. */
+export class NodoReadError extends Error {
+  readonly status: number | null;
+  readonly code: string | null;
+
+  constructor(message: string, failure: Readonly<{ status: number | null; code: string | null }>) {
+    super(message);
+    this.name = "NodoReadError";
+    this.status = failure.status;
+    this.code = failure.code;
+  }
 }
 
 /**
@@ -117,6 +132,10 @@ function networkFailure(error: unknown): string {
   return "NODO request failed";
 }
 
-function publicError(secret: string, message: string): Error {
-  return new Error(redactSecret(message, secret));
+function publicError(
+  secret: string,
+  message: string,
+  failure: Readonly<{ status: number | null; code: string | null }>
+): NodoReadError {
+  return new NodoReadError(redactSecret(message, secret), failure);
 }

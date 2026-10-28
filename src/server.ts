@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NodoConfig } from "./credentials.js";
 import { redactSecret } from "./credentials.js";
-import { nodoGet, type QueryEntry } from "./http.js";
+import { NodoReadError, nodoGet, type QueryEntry } from "./http.js";
 import { presentRead, type MarketFilter, type MarketPage, type ReadKind } from "./present.js";
 import {
   getAssetInput,
@@ -233,6 +233,46 @@ async function read(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "NODO request failed";
-    throw new Error(redactSecret(message, config.apiSecret));
+    const hint = recovery(kind, error);
+    throw new Error(redactSecret(hint ? `${message}\n${hint}` : message, config.apiSecret));
   }
+}
+
+const SOURCE: Readonly<Partial<Record<ReadKind, string>>> = {
+  get_asset: "Call list_assets and copy assetId unchanged.",
+  get_opportunity: "Call list_opportunities and copy opportunityId unchanged.",
+  get_market_apy_history:
+    "Call list_markets and copy protocolId and marketId from the same row. Pass assetId when that market maps to more than one product.",
+};
+
+/** One line for the caller: whether retrying helps, and what to call instead. */
+export function recovery(kind: ReadKind, error: unknown): string | null {
+  if (!(error instanceof NodoReadError)) return null;
+  switch (error.code) {
+    case "not_found":
+      return `Do not retry with the same id. ${SOURCE[kind] ?? "List again and copy the id unchanged."}`;
+    case "invalid_input":
+      return `Do not retry unchanged. Check the arguments against this tool's input schema. ${SOURCE[kind] ?? ""}`.trim();
+    case "auth_invalid":
+    case "unauthorized":
+      return "Retrying will not help. NODO_API_KEY or NODO_API_SECRET is wrong, revoked, or from another environment.";
+    case "permission_insufficient":
+    case "organization_suspended":
+      return "Retrying will not help. This key cannot read; it needs the common.read permission.";
+    case "rate_limited":
+      return "Wait before retrying. Do not loop on this call.";
+    case "dependency_unavailable":
+    case "not_ready":
+      return "The data is not available yet. Try once later. Do not fill in figures yourself.";
+  }
+  if (error.code === null && error.status !== null && error.status >= 300 && error.status < 400) {
+    return "Retrying will not help. NODO_API_BASE_URL answers with a redirect; set it to the API URL itself.";
+  }
+  if (error.code === null && (error.status === 401 || error.status === 403)) {
+    return "Retrying will not help. NODO_API_KEY or NODO_API_SECRET was refused.";
+  }
+  if (error.code === null && (error.status === null || error.status >= 500)) {
+    return "Try once more. If it fails again, report that the read failed. Do not fill in figures yourself.";
+  }
+  return null;
 }

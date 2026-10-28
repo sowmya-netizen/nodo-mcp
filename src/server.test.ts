@@ -322,8 +322,64 @@ test("an HTTP 200 API error envelope is a tool error", async () => {
   const serialized = JSON.stringify(result);
   assert.equal(result.isError, true);
   assert.match(serialized, /NODO API auth_invalid/);
+  assert.match(serialized, /Retrying will not help/);
   assert.match(serialized, /\[redacted\]/);
   assertNoSecret(serialized, apiSecret);
+});
+
+test("every failed read says whether to retry and what to call instead", async () => {
+  const { apiSecret } = throwawayCredential();
+  const cases: {
+    response: () => Response;
+    tool: string;
+    arguments: Record<string, unknown>;
+    expect: RegExp;
+  }[] = [
+    {
+      response: () => jsonResponse({ error: { code: "not_found", message: "Opportunity not found" } }),
+      tool: "get_opportunity",
+      arguments: { opportunityId: "opportunity-v2:ethereum:gone" },
+      expect: /Do not retry with the same id\. Call list_opportunities and copy opportunityId unchanged\./,
+    },
+    {
+      response: () => jsonResponse({ error: { code: "not_found", message: "Asset not found" } }),
+      tool: "get_asset",
+      arguments: { assetId: "mAPOLLO" },
+      expect: /Call list_assets and copy assetId unchanged\./,
+    },
+    {
+      response: () => jsonResponse({ error: { code: "invalid_input", message: "assetId is ambiguous" } }),
+      tool: "get_market_apy_history",
+      arguments: { protocol: "morpho-blue", marketId: "0xabc" },
+      expect: /Pass assetId when that market maps to more than one product\./,
+    },
+    {
+      response: () => jsonResponse({ error: { code: "rate_limited", message: "Slow down" } }),
+      tool: "list_assets",
+      arguments: {},
+      expect: /Wait before retrying\./,
+    },
+    {
+      response: () => new Response("upstream down", { status: 503 }),
+      tool: "list_markets",
+      arguments: {},
+      expect: /Try once more\. .*Do not fill in figures yourself\./,
+    },
+    {
+      response: () => new Response(null, { status: 301, headers: { location: "https://example.test" } }),
+      tool: "list_assets",
+      arguments: {},
+      expect: /NODO_API_BASE_URL answers with a redirect/,
+    },
+  ];
+  for (const item of cases) {
+    const result = await withClient(
+      config(apiSecret, async () => item.response()),
+      (client) => client.callTool({ name: item.tool, arguments: item.arguments })
+    );
+    assert.equal(result.isError, true, item.tool);
+    assert.match(JSON.stringify(result), item.expect, item.tool);
+  }
 });
 
 test("a resource body that mentions error is still a successful read", async () => {
